@@ -1,4 +1,4 @@
-##  V2025.10.14
+##  V2025.10.18
 - 添加英文文案（软件翻译可能词不达意）
 - SDK支持切换使用3种相机类型
 - setCameraType API 更改为FaceAICameraType类型（SYSTEM,UVC_RGB,UVC_RGB_IR）

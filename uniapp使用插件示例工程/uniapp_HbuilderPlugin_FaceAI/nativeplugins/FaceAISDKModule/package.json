@@ -16,7 +16,7 @@
             "hooksClass": "",  
             "integrateType": "aar",  
             "dependencies": [
-              "io.github.faceaisdk:Android:2025.10.16.zjt",
+              "io.github.faceaisdk:Android:2025.10.18",
               "com.airbnb.android:lottie:6.0.0",
               "androidx.constraintlayout:constraintlayout:2.1.4",
               "pub.devrel:easypermissions:3.0.0",

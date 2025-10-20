@@ -71,7 +71,7 @@
 			                              "silentThreshold": 0.86,
 			                              "faceLivenessType": 3,
 			                              "motionStepSize": 2,
-			                              "verifyTimeOut": 11,
+			                              "verifyTimeOut": 7,
 			                              "exceptMotionLiveness": -1
 			                           } ,
 					(ret) => {
