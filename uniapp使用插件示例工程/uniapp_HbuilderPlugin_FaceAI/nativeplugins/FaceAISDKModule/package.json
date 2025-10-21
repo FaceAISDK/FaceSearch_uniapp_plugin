@@ -1,7 +1,7 @@
 {  
     "name": "FaceAISDKModule",  
     "id": "FaceAISDKModule",  
-    "version": "3.6.1",
+    "version": "2025.10.21",
     "description": "FaceAI SDK是设备端可离线不联网Android 人脸识别、活体检测以及人脸搜索SDK，可快速集成实现人脸识别，人脸搜索功能",
     "_dp_type":"nativeplugin",  
     "_dp_nativeplugin":{  
@@ -16,7 +16,7 @@
             "hooksClass": "",  
             "integrateType": "aar",  
             "dependencies": [
-              "io.github.faceaisdk:Android:2025.10.18",
+              "io.github.faceaisdk:Android:2025.10.20",
               "com.airbnb.android:lottie:6.0.0",
               "androidx.constraintlayout:constraintlayout:2.1.4",
               "pub.devrel:easypermissions:3.0.0",
