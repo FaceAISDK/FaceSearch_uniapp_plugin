@@ -22,6 +22,7 @@ import com.ai.face.faceVerify.verify.liveness.MotionLivenessMode;
 import com.ai.face.faceVerify.verify.liveness.FaceLivenessType;
 import com.faceAI.demo.R;
 import com.faceAI.demo.SysCamera.camera.MyCameraXFragment;
+import com.faceAI.demo.SysCamera.search.ImageToast;
 import com.faceAI.demo.base.AbsBaseActivity;
 import com.faceAI.demo.base.utils.BitmapUtils;
 import com.faceAI.demo.base.utils.VoicePlayer;
@@ -44,12 +45,13 @@ public class LivenessDetectActivity extends AbsBaseActivity {
     public static final String FACE_LIVENESS_TYPE = "FACE_LIVENESS_TYPE";   //活体检测的类型
     public static final String MOTION_STEP_SIZE = "MOTION_STEP_SIZE";   //动作活体的步骤数
     public static final String MOTION_TIMEOUT = "MOTION_TIMEOUT";   //动作活体超时数据
-    public static final String EXCEPT_MOTION_LIVENESS = "EXCEPT_MOTION_LIVENESS"; //排除的动作活体
+    public static final String MOTION_LIVENESS_TYPES = "MOTION_LIVENESS_TYPES"; //动作活体种类
+
     private FaceLivenessType faceLivenessType = FaceLivenessType.SILENT_MOTION; //活体检测类型
     private float silentLivenessThreshold = 0.85f; //静默活体分数通过的阈值,摄像头成像能力弱的自行调低
     private int motionStepSize = 2; //动作活体的个数
     private int motionTimeOut = 7; //动作超时秒
-    private int exceptMotionLiveness = -1; //1.张张嘴 2.微笑 3.眨眨眼 4.摇头 5.点头
+    private String motionLivenessTypes ="1,2,3,4,5" ; //1.张张嘴 2.微笑 3.眨眨眼 4.摇头 5.点头
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,24 +93,28 @@ public class LivenessDetectActivity extends AbsBaseActivity {
         FaceProcessBuilder faceProcessBuilder = new FaceProcessBuilder.Builder(this)
                 .setLivenessOnly(true)
                 .setLivenessType(faceLivenessType) //活体检测可以静默&动作活体组合，静默活体效果和摄像头成像能力有关(宽动态>105Db)
-                .setSilentLivenessThreshold(silentLivenessThreshold)  //静默活体阈值 [0.88,0.98]
-                .setMotionLivenessStepSize(motionStepSize)           //随机动作活体的步骤个数[1-2]，SILENT_MOTION和MOTION 才有效
-                .setMotionLivenessTimeOut(motionTimeOut)           //动作活体检测，支持设置超时时间 [3,22] 秒 。API 名字0410 修改
+                .setSilentLivenessThreshold(silentLivenessThreshold)   //静默活体阈值 [0.88,0.98]
+                .setMotionLivenessStepSize(motionStepSize)             //随机动作活体的步骤个数[1-2]，SILENT_MOTION和MOTION 才有效
+                .setMotionLivenessTimeOut(motionTimeOut)               //动作活体检测，支持设置超时时间 [3,22] 秒 。API 名字0410 修改
                 .setLivenessDetectionMode(MotionLivenessMode.ACCURACY) //硬件配置低用FAST动作活体模式，否则用精确模式
-                .setExceptMotionLivenessType(exceptMotionLiveness) //动作活体去除微笑 或其他某一种
+                .setMotionLivenessTypes(motionLivenessTypes)           //动作活体种类。1 张张嘴,2 微笑,3 眨眨眼,4 摇摇头,5 点点头
                 .setStopVerifyNoFaceRealTime(true)      //没检测到人脸是否立即停止，还是出现过人脸后检测到无人脸停止.(默认false，为后者)
                 .setProcessCallBack(new ProcessCallBack() {
 
                     /**
-                     * 活体检测完成，动作活体没有超时（如有），静默活体设置了需要（不需要返回0）
+                     * 动作活体检测完成，同时返回RGB静默活体分数(setLivenessType设置过)
                      *
-                     * @param silentLivenessValue RGB静默活体分数
+                     * @param silentLivenessValue RGB静默活体分数,RGB分数可靠性和摄像头会有关，请确认。
                      * @param bitmap 活体检测快照，可以用于log记录
                      */
                     @Override
                     public void onLivenessDetected(float silentLivenessValue, Bitmap bitmap) {
                         BitmapUtils.saveBitmap(bitmap,CACHE_FACE_LOG_DIR,"liveBitmap"); //保存给插件用，原生开发忽略
-                        finishFaceVerify(9,R.string.liveness_detection_done,silentLivenessValue);
+
+                        runOnUiThread(() -> {
+                            new ImageToast().show(getApplicationContext(), bitmap, getString(R.string.liveness_detection_done)+" " + silentLivenessValue);
+                            finishFaceVerify(9,R.string.liveness_detection_done,silentLivenessValue);
+                        });
                     }
 
                     //人脸识别，活体检测过程中的各种提示
@@ -166,7 +172,7 @@ public class LivenessDetectActivity extends AbsBaseActivity {
                     // 动作活体检测完成了
                     case ALIVE_DETECT_TYPE_ENUM.ALIVE_CHECK_DONE:
                         VoicePlayer.getInstance().play(R.raw.verify_success);
-                        setMainTips(R.string.liveness_detection_done);
+                        setMainTips(R.string.keep_face_visible); //2秒后抓取一张正脸图
                         setSecondTips(0);
                         break;
 
@@ -338,8 +344,8 @@ public class LivenessDetectActivity extends AbsBaseActivity {
             if (intent.hasExtra(SILENT_THRESHOLD_KEY)) {
                 motionTimeOut = intent.getIntExtra(MOTION_TIMEOUT, 10);
             }
-            if (intent.hasExtra(EXCEPT_MOTION_LIVENESS)) {
-                exceptMotionLiveness = intent.getIntExtra(EXCEPT_MOTION_LIVENESS, -1);
+            if (intent.hasExtra(MOTION_LIVENESS_TYPES)) {
+                motionLivenessTypes = intent.getStringExtra(MOTION_LIVENESS_TYPES);
             }
         }
     }

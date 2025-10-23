@@ -259,7 +259,7 @@ public class FaceAISDKModule extends UniModule {
             intent.putExtra(FaceVerificationActivity.MOTION_STEP_SIZE,jsonObject.getIntValue("motionStepSize"));
             intent.putExtra(FaceVerificationActivity.MOTION_TIMEOUT,jsonObject.getIntValue("verifyTimeOut"));
             intent.putExtra(FaceVerificationActivity.SILENT_THRESHOLD_KEY,jsonObject.getFloatValue("silentThreshold"));
-            intent.putExtra(FaceVerificationActivity.EXCEPT_MOTION_LIVENESS,jsonObject.getIntValue("exceptMotionLiveness"));
+            intent.putExtra(FaceVerificationActivity.MOTION_LIVENESS_TYPES,jsonObject.getString("motionLivenessTypes"));
 
             ((Activity)mUniSDKInstance.getContext()).startActivityForResult(intent, REQUEST_CODE_FOR_FACE_VERIFY);
         }

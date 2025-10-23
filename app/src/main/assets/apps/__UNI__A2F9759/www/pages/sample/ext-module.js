@@ -292,7 +292,7 @@
                                           "faceLivenessType": 3,
                                           "motionStepSize": 1,
                                           "verifyTimeOut": 16,
-                                          "exceptMotionLiveness": -1
+                                          "motionLivenessTypes": "1,2,3,4,5"
                                        }, (function(t) {
 							i.toast({
 								message: t,
@@ -307,7 +307,7 @@
                                           "faceLivenessType": 3,
                                           "motionStepSize": 1,
                                           "verifyTimeOut": 11,
-                                          "exceptMotionLiveness": -1
+                                          "motionLivenessTypes": "1,2,3,4,5"
                                        }, (function(t) {
 							i.toast({
 								message: t,
