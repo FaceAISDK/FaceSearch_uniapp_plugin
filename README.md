@@ -103,11 +103,4 @@ IDE版本兼容性问题参考官方，本库开发版本如上；欢迎大家�
   "faceBase64":"人脸场景图像faceBase64转码"  
 }
 
-更多定制授权请联系：FaceAISDK.service@gmail.com
 
-## 故事的结尾
-
-由于本插件仅仅能在uniApp（Android）中使用，也无法再上架插件市场，欢迎iOS大佬补全插件制作，iOS 原生工程：https://github.com/FaceAISDK/FaceAISDK_iOS
-  
-我们后期将精力聚焦于开发能同时在uni-app x与uni-app使用的UTS版本插件上，欢迎插件制作大佬一同完善（有偿）
-**UTS重构版本 https://github.com/FaceAISDK/FaceAISDK_uniapp_UTS**
