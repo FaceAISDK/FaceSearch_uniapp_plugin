@@ -52,9 +52,8 @@ dependencies {
     implementation 'com.facebook.fresco:fresco:1.13.0'
 
 
-    //More: FaceAISDK.Service@gmail.com
     //SDK接入Demo源码及介绍：https://github.com/FaceAISDK/FaceAISDK_Android
-    api 'io.github.faceaisdk:Android:2025.10.30'
+    api 'io.github.faceaisdk:Android:2025.11.01'
 
 
     //UVC协议USB摄像头选配，源码: https://github.com/shiyinghan/UVCAndroid
