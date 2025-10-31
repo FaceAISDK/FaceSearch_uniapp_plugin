@@ -3,13 +3,6 @@ package com.faceAI.demo.SysCamera.addFace;
 import static android.view.View.GONE;
 import static com.ai.face.base.baseImage.BaseImageDispose.PERFORMANCE_MODE_ACCURATE;
 import static com.ai.face.base.baseImage.BaseImageDispose.PERFORMANCE_MODE_FAST;
-import static com.ai.face.faceVerify.verify.VerifyStatus.VERIFY_DETECT_TIPS_ENUM.FACE_TOO_LARGE;
-import static com.ai.face.faceVerify.verify.VerifyStatus.VERIFY_DETECT_TIPS_ENUM.FACE_TOO_MANY;
-import static com.ai.face.faceVerify.verify.VerifyStatus.VERIFY_DETECT_TIPS_ENUM.FACE_TOO_SMALL;
-import static com.ai.face.faceVerify.verify.VerifyStatus.VERIFY_DETECT_TIPS_ENUM.NO_FACE_REPEATEDLY;
-import static com.faceAI.demo.FaceSDKConfig.CACHE_BASE_FACE_DIR;
-import static com.faceAI.demo.FaceSDKConfig.CACHE_SEARCH_FACE_DIR;
-
 import static com.ai.face.faceVerify.verify.VerifyStatus.ALIVE_DETECT_TYPE_ENUM.CLOSE_EYE;
 import static com.ai.face.faceVerify.verify.VerifyStatus.ALIVE_DETECT_TYPE_ENUM.HEAD_CENTER;
 import static com.ai.face.faceVerify.verify.VerifyStatus.ALIVE_DETECT_TYPE_ENUM.HEAD_DOWN;
@@ -17,8 +10,14 @@ import static com.ai.face.faceVerify.verify.VerifyStatus.ALIVE_DETECT_TYPE_ENUM.
 import static com.ai.face.faceVerify.verify.VerifyStatus.ALIVE_DETECT_TYPE_ENUM.HEAD_RIGHT;
 import static com.ai.face.faceVerify.verify.VerifyStatus.ALIVE_DETECT_TYPE_ENUM.HEAD_UP;
 import static com.ai.face.faceVerify.verify.VerifyStatus.ALIVE_DETECT_TYPE_ENUM.TILT_HEAD;
+import static com.ai.face.faceVerify.verify.VerifyStatus.VERIFY_DETECT_TIPS_ENUM.FACE_TOO_LARGE;
+import static com.ai.face.faceVerify.verify.VerifyStatus.VERIFY_DETECT_TIPS_ENUM.FACE_TOO_MANY;
+import static com.ai.face.faceVerify.verify.VerifyStatus.VERIFY_DETECT_TIPS_ENUM.FACE_TOO_SMALL;
+import static com.ai.face.faceVerify.verify.VerifyStatus.VERIFY_DETECT_TIPS_ENUM.NO_FACE_REPEATEDLY;
 import static com.faceAI.demo.FaceAISettingsActivity.FRONT_BACK_CAMERA_FLAG;
 import static com.faceAI.demo.FaceAISettingsActivity.SYSTEM_CAMERA_DEGREE;
+import static com.faceAI.demo.FaceSDKConfig.CACHE_BASE_FACE_DIR;
+import static com.faceAI.demo.FaceSDKConfig.CACHE_SEARCH_FACE_DIR;
 import static com.faceAI.demo.SysCamera.verify.FaceVerificationActivity.USER_FACE_ID_KEY;
 
 import android.app.Dialog;
@@ -50,7 +49,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
 import com.faceAI.demo.FaceSDKConfig;
 import com.faceAI.demo.R;
-import com.faceAI.demo.SysCamera.camera.MyCameraXFragment;
+import com.faceAI.demo.SysCamera.camera.FaceCameraXFragment;
 import com.faceAI.demo.base.AbsBaseActivity;
 
 import org.jetbrains.annotations.NotNull;
@@ -142,11 +141,11 @@ public class AddFaceImageActivity extends AbsBaseActivity {
 
         CameraXBuilder cameraXBuilder = new CameraXBuilder.Builder()
                 .setCameraLensFacing(cameraLensFacing) //前后摄像头
-                .setLinearZoom(0.001f) //需摄像头支持变焦,范围[0.001f,1.0f]，参考{@link CameraControl#setLinearZoom(float)}
+                .setLinearZoom(0f) //需摄像头支持变焦,范围[0f,1.0f]，参考{@link CameraControl#setLinearZoom(float)}
                 .setRotation(degree)   //画面旋转角度0，90，180，270
                 .create();
 
-        MyCameraXFragment cameraXFragment = MyCameraXFragment.newInstance(cameraXBuilder);
+        FaceCameraXFragment cameraXFragment = FaceCameraXFragment.newInstance(cameraXBuilder);
         cameraXFragment.setOnAnalyzerListener(imageProxy -> {
             if (!isDestroyed() && !isFinishing() && !isConfirmAdd) {
                 //某些设备如果一直提示检测不到人脸，可以断点调试看看转化的Bitmap 是否有问题

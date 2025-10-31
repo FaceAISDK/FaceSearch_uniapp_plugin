@@ -48,10 +48,10 @@
 				faceAIModule.faceVerify(
                                         {
                                           "faceID": "yourFaceID_uniApp",
-                                          "threshold": 0.83,
+                                          "threshold": 0.84,
                                           "silentThreshold": 0.86,
                                           "faceLivenessType": 3,
-                                          "motionStepSize": 2,
+                                          "motionStepSize": 1,
                                           "verifyTimeOut": 7,
                                           "motionLivenessTypes": "1,2,3,4,5"
                                        } ,

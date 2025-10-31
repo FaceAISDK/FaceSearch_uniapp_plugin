@@ -16,26 +16,31 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.ai.face.base.baseImage.FaceEmbedding;
 import com.ai.face.core.utils.FaceAICameraType;
-import com.faceAI.demo.UVCCamera.verify.FaceVerify_UVCCameraActivity;
-import com.faceAI.demo.UVCCamera.addFace.AddFace_UVCCameraActivity;
-import com.faceAI.demo.UVCCamera.addFace.AddFace_UVCCameraFragment;
-import com.faceAI.demo.SysCamera.addFace.AddFaceImageActivity;
-import com.faceAI.demo.SysCamera.search.ImageBean;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.bitmap.CenterCrop;
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.viewholder.BaseViewHolder;
+import com.faceAI.demo.FaceSDKConfig;
 import com.faceAI.demo.R;
+import com.faceAI.demo.SysCamera.addFace.AddFaceImageActivity;
+import com.faceAI.demo.SysCamera.search.ImageBean;
+import com.faceAI.demo.UVCCamera.addFace.AddFace_UVCCameraActivity;
+import com.faceAI.demo.UVCCamera.addFace.AddFace_UVCCameraFragment;
+import com.faceAI.demo.UVCCamera.verify.FaceVerify_UVCCameraActivity;
 import com.faceAI.demo.base.utils.BitmapUtils;
+
 import org.jetbrains.annotations.NotNull;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -101,10 +106,10 @@ public class FaceVerifyWelcomeActivity extends AbsAddFaceFromAlbumActivity {
             new AlertDialog.Builder(this).setTitle(getString(R.string.sure_delete_face_title)
                             + imageBean.name+"?").setMessage(R.string.sure_delete_face_tips)
                     .setPositiveButton(R.string.confirm, (dialog, which) -> {
-                        File file = new File(imageBean.path);
-                        if (file.delete()) {
+                        //删除图片和对应的编码
+                        if(FaceSDKConfig.deleteFace(getBaseContext(),imageBean.path,imageBean.name)){
                             updateFaceList();
-                        } else {
+                        }else{
                             Toast.makeText(getApplication(), "Delete failed", Toast.LENGTH_LONG).show();
                         }
                     }).setNegativeButton(R.string.cancel, null).show();

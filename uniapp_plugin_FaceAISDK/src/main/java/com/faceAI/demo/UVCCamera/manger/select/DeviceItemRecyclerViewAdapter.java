@@ -1,12 +1,16 @@
 package com.faceAI.demo.UVCCamera.manger.select;
-import com.faceAI.demo.R;
+
 import android.hardware.usb.UsbDevice;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RadioButton;
 import android.widget.TextView;
+
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.faceAI.demo.R;
+
 import java.util.List;
 
 /**

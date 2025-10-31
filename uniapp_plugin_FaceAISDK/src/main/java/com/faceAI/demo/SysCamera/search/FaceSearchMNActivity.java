@@ -1,7 +1,5 @@
 package com.faceAI.demo.SysCamera.search;
 
-import static com.ai.face.faceSearch.search.SearchProcessTipsCode.SEARCH_PREPARED;
-import static com.faceAI.demo.FaceSDKConfig.CACHE_SEARCH_FACE_DIR;
 import static com.ai.face.faceSearch.search.SearchProcessTipsCode.EMGINE_INITING;
 import static com.ai.face.faceSearch.search.SearchProcessTipsCode.FACE_DIR_EMPTY;
 import static com.ai.face.faceSearch.search.SearchProcessTipsCode.FACE_TOO_SMALL;
@@ -9,25 +7,30 @@ import static com.ai.face.faceSearch.search.SearchProcessTipsCode.MASK_DETECTION
 import static com.ai.face.faceSearch.search.SearchProcessTipsCode.NO_LIVE_FACE;
 import static com.ai.face.faceSearch.search.SearchProcessTipsCode.NO_MATCHED;
 import static com.ai.face.faceSearch.search.SearchProcessTipsCode.SEARCHING;
+import static com.ai.face.faceSearch.search.SearchProcessTipsCode.SEARCH_PREPARED;
 import static com.ai.face.faceSearch.search.SearchProcessTipsCode.THRESHOLD_ERROR;
-import static com.ai.face.faceSearch.search.SearchProcessTipsCode.TOO_MUCH_FACE;
 import static com.faceAI.demo.FaceAISettingsActivity.FRONT_BACK_CAMERA_FLAG;
 import static com.faceAI.demo.FaceAISettingsActivity.SYSTEM_CAMERA_DEGREE;
+import static com.faceAI.demo.FaceSDKConfig.CACHE_SEARCH_FACE_DIR;
+
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.Toast;
+
 import androidx.camera.core.CameraSelector;
-import com.ai.face.base.view.CameraXFragment;
+
 import com.ai.face.base.view.camera.CameraXBuilder;
 import com.ai.face.faceSearch.search.FaceSearchEngine;
 import com.ai.face.faceSearch.search.SearchProcessBuilder;
 import com.ai.face.faceSearch.search.SearchProcessCallBack;
 import com.ai.face.faceSearch.utils.FaceSearchResult;
+import com.faceAI.demo.R;
+import com.faceAI.demo.SysCamera.camera.FaceCameraXFragment;
 import com.faceAI.demo.base.AbsBaseActivity;
 import com.faceAI.demo.databinding.ActivityFaceSearchMnBinding;
-import com.faceAI.demo.R;
+
 import java.util.List;
 
 /**
@@ -62,12 +65,11 @@ public class FaceSearchMNActivity extends AbsBaseActivity {
         //画面旋转方向 默认屏幕方向Display.getRotation()和Surface.ROTATION_0,ROTATION_90,ROTATION_180,ROTATION_270
         CameraXBuilder cameraXBuilder = new CameraXBuilder.Builder()
                 .setCameraLensFacing(cameraLensFacing) //前后摄像头
-                .setLinearZoom(0.001f) //焦距范围[0.001f,1.0f]，参考{@link CameraControl#setLinearZoom(float)}
+                .setLinearZoom(0f) //焦距范围[0f,1.0f]，参考{@link CameraControl#setLinearZoom(float)}
                 .setRotation(degree)   //画面旋转方向
-//                .setSize(CameraXFragment.SIZE.DEFAULT) //默认一种
                 .create();
 
-        CameraXFragment cameraXFragment = CameraXFragment.newInstance(cameraXBuilder);
+        FaceCameraXFragment cameraXFragment = FaceCameraXFragment.newInstance(cameraXBuilder);
 
         getSupportFragmentManager().beginTransaction().replace(R.id.fragment_camerax, cameraXFragment)
                 .commit();
@@ -130,9 +132,6 @@ public class FaceSearchMNActivity extends AbsBaseActivity {
         switch (code) {
             case FACE_TOO_SMALL:
                 Toast.makeText(this, R.string.come_closer_tips, Toast.LENGTH_SHORT).show();
-                break;
-            case TOO_MUCH_FACE:
-                Toast.makeText(this, R.string.multiple_faces_tips, Toast.LENGTH_SHORT).show();
                 break;
 
             case THRESHOLD_ERROR:

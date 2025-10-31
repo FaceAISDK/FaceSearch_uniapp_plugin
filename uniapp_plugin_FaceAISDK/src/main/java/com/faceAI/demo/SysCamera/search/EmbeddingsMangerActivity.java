@@ -9,11 +9,13 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ImageView;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.chad.library.adapter.base.BaseQuickAdapter;
@@ -21,6 +23,7 @@ import com.chad.library.adapter.base.viewholder.BaseViewHolder;
 import com.faceAI.demo.R;
 import com.faceAI.demo.SysCamera.addFace.AddFaceImageActivity;
 import com.faceAI.demo.base.AbsBaseActivity;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;

@@ -9,16 +9,16 @@ import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import com.faceAI.demo.SysCamera.search.CopyFaceImageUtils.Companion.copyTestFaceImage
-import com.faceAI.demo.SysCamera.search.CopyFaceImageUtils.Companion.showAppFloat
-import com.faceAI.demo.UVCCamera.search.FaceSearch_UVCCameraActivity
-import com.lzf.easyfloat.EasyFloat
-import pub.devrel.easypermissions.EasyPermissions
-import pub.devrel.easypermissions.EasyPermissions.PermissionCallbacks
 import androidx.core.content.edit
 import com.faceAI.demo.FaceAISettingsActivity.Companion.FRONT_BACK_CAMERA_FLAG
 import com.faceAI.demo.R
+import com.faceAI.demo.SysCamera.search.CopyFaceImageUtils.Companion.copyTestFaceImage
+import com.faceAI.demo.SysCamera.search.CopyFaceImageUtils.Companion.showAppFloat
+import com.faceAI.demo.UVCCamera.search.FaceSearch_UVCCameraActivity
 import com.faceAI.demo.databinding.ActivityFaceSearchNaviBinding
+import com.lzf.easyfloat.EasyFloat
+import pub.devrel.easypermissions.EasyPermissions
+import pub.devrel.easypermissions.EasyPermissions.PermissionCallbacks
 
 /**
  * 人脸识别搜索 演示导航Navi，目前支持千张图片秒级搜索

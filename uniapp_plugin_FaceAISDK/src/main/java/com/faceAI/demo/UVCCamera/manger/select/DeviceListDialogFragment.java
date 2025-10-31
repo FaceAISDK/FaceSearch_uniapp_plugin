@@ -5,7 +5,6 @@ import android.hardware.usb.UsbDevice;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
-import com.faceAI.demo.R;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -13,6 +12,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.faceAI.demo.R;
 import com.herohan.uvcapp.ICameraHelper;
 
 import java.lang.ref.WeakReference;

@@ -1,24 +1,27 @@
 package com.faceAI.demo.UVCCamera.verify;
 
 import static com.faceAI.demo.SysCamera.verify.FaceVerificationActivity.USER_FACE_ID_KEY;
+
 import android.graphics.Bitmap;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AlertDialog;
+
 import com.ai.face.base.baseImage.FaceEmbedding;
 import com.ai.face.core.utils.FaceAICameraType;
-import com.ai.face.faceVerify.verify.liveness.FaceLivenessType;
 import com.ai.face.faceVerify.verify.FaceProcessBuilder;
 import com.ai.face.faceVerify.verify.FaceVerifyUtils;
 import com.ai.face.faceVerify.verify.ProcessCallBack;
 import com.ai.face.faceVerify.verify.VerifyStatus;
+import com.ai.face.faceVerify.verify.liveness.FaceLivenessType;
 import com.ai.face.faceVerify.verify.liveness.MotionLivenessMode;
+import com.faceAI.demo.R;
 import com.faceAI.demo.base.utils.BrightnessUtil;
 import com.faceAI.demo.base.utils.VoicePlayer;
-import com.faceAI.demo.R;
 
 /**
  * 演示UVC协议USB摄像头1:1人脸识别，活体检测

@@ -17,16 +17,16 @@ import android.provider.MediaStore
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.faceAI.demo.BuildConfig
+import androidx.core.graphics.drawable.toDrawable
 import com.ai.face.base.baseImage.FaceAIUtils
 import com.ai.face.faceVerify.verify.FaceVerifyUtils
+import com.faceAI.demo.BuildConfig
 import com.faceAI.demo.base.utils.fileUtils.MyFileUtils
 import com.faceAI.demo.databinding.ActivityTwoFaceImageVerifyBinding
-import androidx.core.graphics.drawable.toDrawable
 
 
 /**
- * 对比两张图片中人脸相似度
+ * 对比两张图片中人脸相似度，SDK开放基础功能
  *
  * 裁剪出图片中的人脸部分进行相似度比较，如果某一张照片中没有检测到人脸，则相似度返回为0。
  *

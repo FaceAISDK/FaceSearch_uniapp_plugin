@@ -7,7 +7,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
 import androidx.core.content.edit
-import com.ai.face.core.utils.FaceAICameraType
 import com.faceAI.demo.UVCCamera.manger.select.DeviceListDialogFragment
 import com.faceAI.demo.databinding.ActivityFaceAiSettingsBinding
 import com.herohan.uvcapp.CameraHelper
