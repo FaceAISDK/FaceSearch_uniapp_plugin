@@ -4,6 +4,13 @@
   1. 「uniapp_plugin_FaceAISDK」 是Android原生语言部分插件，如果你想修改优化插件实现可以用Android Studio参考源码修改
   2. **「uniapp使用插件示例工程」** 是uniApp 使用演示Demo，使用HBuildX 打开，如果你觉得插件够用不想改插件只想使用，聚焦关注此就行
 
+  Email: FaceAISDK.Service@gmail.com   
+  iOS SDK： https://github.com/FaceAISDK/FaceAISDK_iOS  
+  Android： https://github.com/FaceAISDK/FaceAISDK_Android     
+  **其他实现**  
+  **React native** https://github.com/zkteco-home/react-native-face-ai  
+  **uniApp UTS插件：**  https://github.com/FaceAISDK/FaceAISDK_uniapp_UTS  
+
    
 # FaceAI人脸识别SDK Uni-App 插件
 
