@@ -51,7 +51,12 @@
 			},
 			"splashScreens": {
 				"default": {}
-			}
+			},
+			"minSdkVersion": "21",
+			"targetSdkVersion": "35",
+			"abiFilters": [
+				"arm64-v8a"
+			]
 		}
 	},
 	"app-ios": {
