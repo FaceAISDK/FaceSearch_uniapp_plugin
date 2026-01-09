@@ -27,6 +27,6 @@
 	本插件为人脸搜索（1:N）如果 你需要1:1人脸验证（支持iOS，Android）请移步：https://ext.dcloud.net.cn/plugin?id=23881
 	
   注：只支持真机调试，需要用到硬件摄像头  
-  Copyright © 2026 FaceAISDK. All rights reserved | Email:FaceAISDK.Service@gmail.com
+  Copyright © 2026 FaceAISDK. All rights reserved      Email:FaceAISDK.Service@gmail.com
 
 
