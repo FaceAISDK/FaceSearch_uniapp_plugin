@@ -1,0 +1,17 @@
+{
+	"pages": [ //pages数组中第一项表示应用启动页，参考：https://doc.dcloud.net.cn/uni-app-x/collocation/pagesjson.html
+		{
+			"path": "pages/index/index",
+			"style": {
+				"navigationBarTitleText": "人脸搜索识别"
+			}
+		}
+	],
+	"globalStyle": {
+		"navigationBarTextStyle": "black",
+		"navigationBarTitleText": "人脸搜索识别",
+		"navigationBarBackgroundColor": "#f6777b",
+		"backgroundColor": "#F8F8F8"
+	},
+	"uniIdRouter": {}
+}

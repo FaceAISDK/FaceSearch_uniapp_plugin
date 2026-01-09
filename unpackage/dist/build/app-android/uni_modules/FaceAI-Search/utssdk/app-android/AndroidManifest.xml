@@ -1,0 +1,18 @@
+<!-- AndroidManifest.xml -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="uts.sdk.modules.uniFaceAISDK">
+
+    <application
+        android:largeHeap="true"
+        android:hardwareAccelerated="true">
+		
+		<activity
+		    android:name=".FaceSearchActivity"
+		    android:exported="false"
+			android:launchMode="singleTop"
+		    android:theme="@style/Theme.FaceAISDK.Fullscreen"
+			tools:replace="android:theme" />
+    </application>
+
+</manifest> 

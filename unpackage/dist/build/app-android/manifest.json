@@ -1,0 +1,29 @@
+{
+  "id": "__UNI__C3F93BB",
+  "name": "FaceSearch",
+  "description": "人脸搜索识别，1:N人脸搜索",
+  "version": {
+    "name": "1.0.1",
+    "code": "101"
+  },
+  "uni-app-x": {
+    "compilerVersion": "4.87"
+  },
+  "app-android": {
+    "distribute": {
+      "modules": {
+        "uni-exit": {},
+        "uni-prompt": {}
+      },
+      "icons": {
+        "hdpi": "",
+        "xhdpi": "",
+        "xxhdpi": "",
+        "xxxhdpi": ""
+      },
+      "splashScreens": {
+        "default": {}
+      }
+    }
+  }
+}

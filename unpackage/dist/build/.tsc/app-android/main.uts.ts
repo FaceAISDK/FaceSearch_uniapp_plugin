@@ -1,0 +1,41 @@
+import App from './App.uvue'
+
+import { createSSRApp } from 'vue'
+export function createApp() {
+	const app = createSSRApp(App)
+	return {
+		app
+	}
+}
+export function main(app: IApp) {
+    definePageRoutes();
+    defineAppConfig();
+    (createApp()['app'] as VueApp).mount(app, GenUniApp());
+}
+
+export class UniAppConfig extends io.dcloud.uniapp.appframe.AppConfig {
+    override name: string = "FaceSearch"
+    override appid: string = "__UNI__C3F93BB"
+    override versionName: string = "1.0.1"
+    override versionCode: string = "101"
+    override uniCompilerVersion: string = "4.87"
+    
+    constructor() { super() }
+}
+
+import GenPagesIndexIndexClass from './pages/index/index.uvue'
+function definePageRoutes() {
+__uniRoutes.push({ path: "pages/index/index", component: GenPagesIndexIndexClass, meta: { isQuit: true } as UniPageMeta, style: _uM([["navigationBarTitleText","人脸搜索识别"]]) } as UniPageRoute)
+}
+const __uniTabBar: Map<string, any | null> | null = null
+const __uniLaunchPage: Map<string, any | null> = _uM([["url","pages/index/index"],["style",_uM([["navigationBarTitleText","人脸搜索识别"]])]])
+function defineAppConfig(){
+  __uniConfig.entryPagePath = '/pages/index/index'
+  __uniConfig.globalStyle = _uM([["navigationBarTextStyle","black"],["navigationBarTitleText","人脸搜索识别"],["navigationBarBackgroundColor","#f6777b"],["backgroundColor","#F8F8F8"]])
+  __uniConfig.getTabBarConfig = ():Map<string, any> | null =>  null
+  __uniConfig.tabBar = __uniConfig.getTabBarConfig()
+  __uniConfig.conditionUrl = ''
+  __uniConfig.uniIdRouter = _uM()
+  
+  __uniConfig.ready = true
+}
