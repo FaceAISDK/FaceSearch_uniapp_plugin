@@ -24,6 +24,7 @@
     ![运行到手机](https://i.postimg.cc/QdwtZM60/2.png)
 	**请手动勾选对正确的运行方式，很多朋友辛苦打好了自定义基座包，结果运行的时候没选对导致运行不了**  
 	
+	本插件为人脸搜索（1:N）如果 你需要1:1人脸验证（支持iOS，Android）请移步：https://ext.dcloud.net.cn/plugin?id=23881
 	
   注：只支持真机调试，需要用到硬件摄像头
   Copyright © 2026 FaceAISDK. All rights reserved | Email:FaceAISDK.Service@gmail.com
