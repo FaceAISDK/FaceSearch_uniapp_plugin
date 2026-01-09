@@ -1,3 +1,0 @@
-include ':app'
-include ':uniapp_plugin_FaceAISDK'
-include ':uts-toast'
