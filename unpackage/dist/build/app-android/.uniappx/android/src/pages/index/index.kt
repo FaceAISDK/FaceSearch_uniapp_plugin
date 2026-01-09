@@ -42,7 +42,7 @@ open class GenPagesIndexIndex : BasePage {
             _cE("button", _uM("class" to "gray-button", "onClick" to _ctx.insertFaceSearchFeatureDemo), "同步人脸搜索特征值", 8, _uA(
                 "onClick"
             )),
-            _cE("button", _uM("class" to "gray-button", "onClick" to _ctx.insertFaceSearchFeatureSDemo), "批量同步人脸搜索特征值", 8, _uA(
+            _cE("button", _uM("class" to "gray-button", "onClick" to _ctx.insertManyFaceFeatureSDemo), "批量同步人脸搜索特征值", 8, _uA(
                 "onClick"
             )),
             _cE("view", _uM("class" to "result-box"), _uA(
@@ -59,13 +59,13 @@ open class GenPagesIndexIndex : BasePage {
     open var faceAIResult: String by `$data`
     @Suppress("USELESS_CAST")
     override fun data(): Map<String, Any?> {
-        return _uM("faceID" to "faceSearchID", "faceFeature" to "faceFeature is a string with lenth 1024", "faceJSONFeatures" to "faceFeature is a string with lenth 1024", "faceAIResult" to "faceAIResult")
+        return _uM("faceID" to "Test", "faceFeature" to "faceFeature is a string with lenth 1024", "faceJSONFeatures" to "faceFeature is a string with lenth 1024", "faceAIResult" to "faceAIResult")
     }
     open var startFaceSearchDemo = ::gen_startFaceSearchDemo_fn
     open fun gen_startFaceSearchDemo_fn() {
         startFaceSearch(fun(jsonStr: String){
             console.log("收到搜索结果:", jsonStr)
-            this.faceAIResult = "【实时回调】\n" + jsonStr
+            this.faceAIResult = "【人脸搜索回调】\n" + jsonStr
         }
         )
     }
@@ -97,9 +97,9 @@ open class GenPagesIndexIndex : BasePage {
         }
         )
     }
-    open var insertFaceSearchFeatureSDemo = ::gen_insertFaceSearchFeatureSDemo_fn
-    open fun gen_insertFaceSearchFeatureSDemo_fn() {
-        insertManyFeatures(this.faceID, fun(result: ResultJSON){
+    open var insertManyFaceFeatureSDemo = ::gen_insertManyFaceFeatureSDemo_fn
+    open fun gen_insertManyFaceFeatureSDemo_fn() {
+        insertManyFeatures(JSON_FACE_FEATURES_DATA, fun(result: ResultJSON){
             this.faceAIResult = JSON.stringify(result)
         }
         )

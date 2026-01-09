@@ -1,9 +1,9 @@
 {
-	"name": "FaceSearch",
+	"name": "人脸搜索UTS",
 	"appid": "__UNI__C3F93BB",
 	"description": "人脸搜索识别，1:N人脸搜索",
-	"versionName": "1.0.1",
-	"versionCode": "101",
+	"versionName": "1.0.7",
+	"versionCode": "107",
 	"uni-app-x": {},
 	/* 快应用特有相关 */
 	"quickapp": {},

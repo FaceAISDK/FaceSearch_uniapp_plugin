@@ -27,11 +27,9 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageProxy;
-
 import com.ai.face.base.view.camera.CameraXBuilder;
 import com.ai.face.faceSearch.search.FaceSearchEngine;
 import com.ai.face.faceSearch.search.SearchProcessBuilder;
@@ -42,6 +40,7 @@ import com.faceAI.demo.base.AbsBaseActivity;
 import com.faceAI.demo.base.utils.VoicePlayer;
 import com.faceAI.demo.databinding.ActivityFaceSearchBinding;
 import com.google.gson.Gson;
+import com.faceAI.demo.SysCamera.search.ImageToast;
 
 import java.util.List;
 
@@ -68,14 +67,10 @@ public class FaceSearchActivity extends AbsBaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+		hideSystemUI(); 
         binding = ActivityFaceSearchBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         binding.close.setOnClickListener(v -> finish());
-
-        binding.tips.setOnClickListener(v -> {
-            startActivity(new Intent(this, FaceSearchImageMangerActivity.class)
-                    .putExtra("isAdd", false));
-        });
 
         SharedPreferences sharedPref = getSharedPreferences("FaceAISDK_SP", Context.MODE_PRIVATE);
         cameraLensFacing = sharedPref.getInt(FRONT_BACK_CAMERA_FLAG, CameraSelector.LENS_FACING_FRONT); //默认前置
@@ -132,9 +127,7 @@ public class FaceSearchActivity extends AbsBaseActivity {
 						runOnUiThread(new Runnable() {
 						        @Override
 						        public void run() {
-						            if (FaceResultManager.INSTANCE.getListener() != null) {
-						                FaceResultManager.INSTANCE.sendResult(json);
-						            }
+									FaceResultManager.INSTANCE.sendResult(json);
 						        }
 						    });
 						

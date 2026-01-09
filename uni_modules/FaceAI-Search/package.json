@@ -1,7 +1,7 @@
 {
 	"id": "FaceAI-Search",
 	"displayName": "FaceAI-人脸搜索识别",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "Android 1:N人脸搜索识别，目前不支持iOS，FaceAISDK.Service@gmail.com",
 	"keywords": [
         "人脸搜索"

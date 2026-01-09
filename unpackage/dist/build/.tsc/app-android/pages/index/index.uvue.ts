@@ -5,12 +5,13 @@
 	        addFaceSearchFeature,
 			deleteFaceSearchFeature,
 			faceSearch,ResultJSON} from "@/uni_modules/FaceAI-Search";
- 
+    import { JSON_FACE_FEATURES_DATA } from "./testData.uts";  //模拟服务端测试数据批量插入
+	
 	const __sfc__ = defineComponent({
 		  
 		data() {
 			return {
-				faceID: 'faceSearchID',
+				faceID: 'Test',
 				faceFeature: 'faceFeature is a string with lenth 1024',
 				faceJSONFeatures: 'faceFeature is a string with lenth 1024',
 				faceAIResult: 'faceAIResult'
@@ -31,7 +32,7 @@
 			        console.log("收到搜索结果:", jsonStr);
 			        
 			        // 1. 简单展示，已经按照搜索匹配度降序排列
-			        this.faceAIResult = "【实时回调】\n" + jsonStr;
+			        this.faceAIResult = "【人脸搜索回调】\n" + jsonStr;
 			        
 			        // 2. 如果需要处理数据，建议包裹 try-catch 解析 JSON
 			        // try {
@@ -102,9 +103,9 @@
 			* 批量操作人脸搜索人脸特征更新同步
 			* 
 			*/
-			insertFaceSearchFeatureSDemo: function () {
+			insertManyFaceFeatureSDemo: function () {
 				insertManyFeatures(
-				     this.faceID,
+				     JSON_FACE_FEATURES_DATA,
 					 (result: ResultJSON)  => {
 						this.faceAIResult =JSON.stringify(result)
 					})
@@ -142,7 +143,7 @@ const _cache = this.$.renderCache
     }), "同步人脸搜索特征值", 8 /* PROPS */, ["onClick"]),
     _cE("button", _uM({
       class: "gray-button",
-      onClick: _ctx.insertFaceSearchFeatureSDemo
+      onClick: _ctx.insertManyFaceFeatureSDemo
     }), "批量同步人脸搜索特征值", 8 /* PROPS */, ["onClick"]),
     _cE("view", _uM({ class: "result-box" }), [
       _cE("view", null, " Email: FaceAISDK.Service@gmail.com"),

@@ -18,6 +18,7 @@ import io.dcloud.uts.*
 import io.dcloud.uts.Map
 import io.dcloud.uts.Set
 import io.dcloud.uts.UTSAndroid
+import java.lang.System
 import kotlin.properties.Delegates
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -45,28 +46,64 @@ open class ResultJSON (
     open var faceBase64: String,
 ) : UTSObject()
 val startFaceSearch: StartFaceSearch = fun(callback: (jsonResult: String) -> Unit) {
-    val context = UTSAndroid.getUniActivity() as Activity
-    FaceSDKConfig.init(context)
-    FaceResultManager.setCallback(FaceResultManager.OnFaceResultListener(object : UTSJSONObject() {
-        var onResult = fun(json: String){
+    UTSAndroid.getUniActivity()!!.runOnUiThread(fun(){
+        val context = UTSAndroid.getUniActivity() as Activity
+        FaceSDKConfig.init(context)
+        FaceResultManager.setCallback(fun(json: String){
             callback(json)
         }
-    }))
-    val intent = Intent(context, FaceSearchActivity().javaClass)
-    context.startActivity(intent)
+        )
+        val intent = Intent(context, FaceSearchActivity().javaClass)
+        context.startActivity(intent)
+    }
+    )
 }
 val insertFaceSearchFeature: InsertFaceSearchFeature = fun(faceID: String, faceFeature: String, tag: String, group: String, callback: (result: ResultJSON) -> Unit) {
     val context = UTSAndroid.getAppContext() as Application
     FaceSDKConfig.init(context)
-    FaceSearchFeatureManger.getInstance(context).insertFaceFeature(faceID, faceFeature, System.currentTimeMillis(), tag, group)
-    val resultJson = ResultJSON(code = 1, msg = "success", faceID = faceID, faceBase64 = "", faceFeature = "")
-    callback(resultJson)
+    if (faceID == null || faceID.trim() == "") {
+        val errorResult = ResultJSON(code = -1, msg = "参数错误: faceID 不能为空", faceID = "", faceBase64 = "", faceFeature = "")
+        console.error(errorResult.msg)
+        callback(errorResult)
+        return
+    }
+    if (faceFeature == null || faceFeature.length != 1024) {
+        val currentLen = if ((faceFeature == null)) {
+            0
+        } else {
+            faceFeature.length
+        }
+        val errorResult = ResultJSON(code = -2, msg = "参数错误: faceFeature 长度必须为 1024 (当前长度: " + currentLen + ")", faceID = faceID, faceBase64 = "", faceFeature = "")
+        console.error(errorResult.msg)
+        callback(errorResult)
+        return
+    }
+    try {
+        val safeTag = if ((tag == null)) {
+            ""
+        } else {
+            tag
+        }
+        val safeGroup = if ((group == null)) {
+            ""
+        } else {
+            group
+        }
+        val isSuccess = FaceSearchFeatureManger.getInstance(context).insertFaceFeature(faceID, faceFeature, System.currentTimeMillis(), safeTag, safeGroup)
+        val successResult = ResultJSON(code = 1, msg = "success", faceID = faceID, faceBase64 = "", faceFeature = "")
+        callback(successResult)
+    }
+     catch (e: Exception) {
+        val catchResult = ResultJSON(code = -3, msg = "Native 执行异常: " + e.message, faceID = faceID, faceBase64 = "", faceFeature = "")
+        console.error("insertFaceSearchFeature error: " + e.message)
+        callback(catchResult)
+    }
 }
 val insertManyFeatures: InsertManyFeatures = fun(jsonFaceFeatures: String, callback: (result: ResultJSON) -> Unit) {
     val context = UTSAndroid.getAppContext() as Application
     FaceSDKConfig.init(context)
-    FaceSearchFeatureManger.getInstance(context).insertFeatures(jsonFaceFeatures)
-    val resultJson = ResultJSON(code = 1, msg = "success", faceID = "", faceBase64 = "", faceFeature = "")
+    var faceCount = FaceSearchFeatureManger.getInstance(context).insertFeatures(jsonFaceFeatures)
+    val resultJson = ResultJSON(code = faceCount, msg = "insertManyFeatures", faceID = "", faceBase64 = "", faceFeature = "")
     callback(resultJson)
 }
 val deleteFaceSearchFeature: DeleteFaceSearchFeature = fun(faceID: String, callback: (result: ResultJSON) -> Unit) {
@@ -77,12 +114,15 @@ val deleteFaceSearchFeature: DeleteFaceSearchFeature = fun(faceID: String, callb
     callback(resultJson)
 }
 val addFaceSearchFeature: AddFaceSearchFeature = fun(faceID: String, addFacePerformanceMode: Number, callback: (result: ResultJSON) -> Unit) {
-    val context = UTSAndroid.getUniActivity() as Activity
-    FaceSDKConfig.init(context)
-    val intent = Intent(context, AddFaceImageActivity().javaClass)
-    intent.putExtra("ADD_FACE_IMAGE_TYPE_KEY", "FACE_SEARCH")
-    intent.putExtra("ADD_FACE_PERFORMANCE_MODE", addFacePerformanceMode)
-    context.startActivityForResult(intent, 10086)
+    UTSAndroid.getUniActivity()!!.runOnUiThread(fun(){
+        val context = UTSAndroid.getUniActivity() as Activity
+        FaceSDKConfig.init(context)
+        val intent = Intent(context, AddFaceImageActivity().javaClass)
+        intent.putExtra("ADD_FACE_IMAGE_TYPE_KEY", "FACE_SEARCH")
+        intent.putExtra("ADD_FACE_PERFORMANCE_MODE", addFacePerformanceMode)
+        context.startActivityForResult(intent, 10086)
+    }
+    )
     UTSAndroid.onAppActivityResult(fun(requestCode: Int, resultCode: Int, intentAct: Intent?){
         if (requestCode == 10086) {
             if (intentAct != null) {

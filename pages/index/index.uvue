@@ -5,7 +5,7 @@
 		<button class="gray-button" @tap="addFaceSearchFeatureDemo">1:N人脸搜索录入人脸</button>
 		<button class="gray-button" @tap="deleteFaceSearchFeatureDemo">删除人脸搜索特征值</button>
 		<button class="gray-button" @tap="insertFaceSearchFeatureDemo">同步人脸搜索特征值</button>
-		<button class="gray-button" @tap="insertFaceSearchFeatureSDemo">批量同步人脸搜索特征值</button>
+		<button class="gray-button" @tap="insertManyFaceFeatureSDemo">批量同步人脸搜索特征值</button>
 		
 		<view class="result-box">
 		      <view> Email: FaceAISDK.Service@gmail.com</view>
@@ -16,6 +16,7 @@
 	</view>
 </template>
 
+//index.uvue: uniAppX  *  index.vue:uniapp
 
 <script> 
 	import {startFaceSearch,
@@ -24,12 +25,13 @@
 	        addFaceSearchFeature,
 			deleteFaceSearchFeature,
 			faceSearch,ResultJSON} from "@/uni_modules/FaceAI-Search";
- 
+    import { JSON_FACE_FEATURES_DATA } from "./testData.uts";  //模拟服务端测试数据批量插入
+	
 	export default {
 		  
 		data() {
 			return {
-				faceID: 'faceSearchID',
+				faceID: 'Test',
 				faceFeature: 'faceFeature is a string with lenth 1024',
 				faceJSONFeatures: 'faceFeature is a string with lenth 1024',
 				faceAIResult: 'faceAIResult'
@@ -50,7 +52,7 @@
 			        console.log("收到搜索结果:", jsonStr);
 			        
 			        // 1. 简单展示，已经按照搜索匹配度降序排列
-			        this.faceAIResult = "【实时回调】\n" + jsonStr;
+			        this.faceAIResult = "【人脸搜索回调】\n" + jsonStr;
 			        
 			        // 2. 如果需要处理数据，建议包裹 try-catch 解析 JSON
 			        // try {
@@ -121,9 +123,9 @@
 			* 批量操作人脸搜索人脸特征更新同步
 			* 
 			*/
-			insertFaceSearchFeatureSDemo: function () {
+			insertManyFaceFeatureSDemo: function () {
 				insertManyFeatures(
-				     this.faceID,
+				     JSON_FACE_FEATURES_DATA,
 					 (result: ResultJSON)  => {
 						this.faceAIResult =JSON.stringify(result)
 					})

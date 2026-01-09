@@ -1,0 +1,26 @@
+{
+  "id": "__UNI__C3F93BB",
+  "name": "人脸搜索UTS",
+  "description": "人脸搜索识别，1:N人脸搜索",
+  "version": {
+    "name": "1.0.7",
+    "code": "107"
+  },
+  "uni-app-x": {
+    "compilerVersion": "4.87"
+  },
+  "app-android": {
+    "distribute": {
+      "modules": {},
+      "icons": {
+        "hdpi": "",
+        "xhdpi": "",
+        "xxhdpi": "",
+        "xxxhdpi": ""
+      },
+      "splashScreens": {
+        "default": {}
+      }
+    }
+  }
+}
