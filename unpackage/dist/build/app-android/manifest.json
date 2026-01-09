@@ -3,8 +3,8 @@
   "name": "人脸搜索UTS",
   "description": "人脸搜索识别，1:N人脸搜索",
   "version": {
-    "name": "1.0.7",
-    "code": "107"
+    "name": "1.0.8",
+    "code": "108"
   },
   "uni-app-x": {
     "compilerVersion": "4.87"
@@ -23,7 +23,12 @@
       },
       "splashScreens": {
         "default": {}
-      }
+      },
+      "minSdkVersion": "21",
+      "targetSdkVersion": "35",
+      "abiFilters": [
+        "arm64-v8a"
+      ]
     }
   }
 }
