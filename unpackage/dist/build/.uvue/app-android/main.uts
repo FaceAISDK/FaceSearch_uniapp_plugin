@@ -34,4 +34,3 @@ function defineAppConfig() {
     __uniConfig.uniIdRouter = _uM();
     __uniConfig.ready = true;
 }
-//# sourceMappingURL=main.uts.map

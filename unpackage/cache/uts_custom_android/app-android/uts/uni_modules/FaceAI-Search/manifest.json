@@ -1,17 +1,17 @@
 {
   "version": "1",
   "env": {
-    "compilerVersion": "4.87"
+    "compilerVersion": "4.87.2025112602-alpha"
   },
   "files": {
     "utssdk/app-android/index.uts": {
-      "md5": "c7567357909f5554c5a823b5852753e0"
+      "md5": "02aa5e71c90e6d4e0792971c20849299"
     },
     "utssdk/interface.uts": {
       "md5": "75bf951e72ee08149c5200180ff5cfa6"
     },
     "utssdk/unierror.uts": {
-      "md5": "b6db7d6baa8bf0a5674cc9ce27fc597d"
+      "md5": "53068dea99b353b641a6a40116974822"
     },
     "package.json": {
       "md5": "429058b68bd724d2214ab70703a0dea3"
@@ -34,11 +34,11 @@
     "utssdk/app-android/libs/faceAILib-release.aar": {
       "md5": "9167032f51dc8ffd4a81b498c9bdbdc3"
     },
-    "utssdk/app-android/res/layout-land/activity_face_search.xml": {
-      "md5": "27f7e855c81af74cea52af97129b3ad0"
-    },
     "utssdk/app-android/res/layout/activity_face_search.xml": {
       "md5": "dd739cb090743797f6fe8eb49fce8a46"
+    },
+    "utssdk/app-android/res/layout-land/activity_face_search.xml": {
+      "md5": "27f7e855c81af74cea52af97129b3ad0"
     },
     "utssdk/app-android/res/values/colors.xml": {
       "md5": "c0312ef1ae5dca53c76b3119b27e5eda"

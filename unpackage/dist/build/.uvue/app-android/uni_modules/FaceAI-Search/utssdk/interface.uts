@@ -49,4 +49,3 @@ export type ResultJSON = {
     faceFeature: string; //人脸特征值
     faceBase64: string; //人脸图Base64编码
 };
-//# sourceMappingURL=interface.uts.map

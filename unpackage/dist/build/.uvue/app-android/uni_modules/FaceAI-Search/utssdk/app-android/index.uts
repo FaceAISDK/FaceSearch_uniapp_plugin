@@ -202,4 +202,3 @@ export const faceSearch: FaceSearch = function (callback: (res: ResultJSON) => v
     };
     callback(resultJson);
 };
-//# sourceMappingURL=index.uts.map
