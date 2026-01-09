@@ -1,6 +1,6 @@
 ## 插件简介
 
-人脸搜索识别Android端侧可离线，支持uniappX和uniapp（上线前新建一个测试工程）。
+人脸搜索识别Android端侧可离线插件，支持uniappX和uniapp。  
 后面我们会支持主题色定制等功能，更多可根据原生工程项目修改升级插件
 
 **插件Demo工程：**  
@@ -8,7 +8,7 @@
 
 ![demo](https://i.postimg.cc/LXdddddddn.png)
 
-插件应用市场地址：https://ext.dcloud.net.cn/plugin?id=99999999999999999999999
+插件应用市场地址：https://ext.dcloud.net.cn/plugin?id=26467
 
 ## 使用方法
   如果你是第一次运行UTS插件工程/引入UTS API插件，你应先安装官方说明配置好基础环境 [基础环境](https://doc.dcloud.net.cn/uni-app-x/plugin/uts-plugin.html) 
@@ -26,7 +26,7 @@
 	
 	本插件为人脸搜索（1:N）如果 你需要1:1人脸验证（支持iOS，Android）请移步：https://ext.dcloud.net.cn/plugin?id=23881
 	
-  注：只支持真机调试，需要用到硬件摄像头
+  注：只支持真机调试，需要用到硬件摄像头  
   Copyright © 2026 FaceAISDK. All rights reserved | Email:FaceAISDK.Service@gmail.com
 
 
