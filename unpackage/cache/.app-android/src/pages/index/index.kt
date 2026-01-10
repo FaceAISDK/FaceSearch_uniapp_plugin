@@ -17,7 +17,6 @@ import uts.sdk.modules.FaceAISearch.insertFaceSearchFeature
 import uts.sdk.modules.FaceAISearch.insertManyFeatures
 import uts.sdk.modules.FaceAISearch.addFaceSearchFeature
 import uts.sdk.modules.FaceAISearch.deleteFaceSearchFeature
-import uts.sdk.modules.FaceAISearch.faceSearch
 import uts.sdk.modules.FaceAISearch.ResultJSON
 open class GenPagesIndexIndex : BasePage {
     constructor(__ins: ComponentInternalInstance, __renderer: String?) : super(__ins, __renderer) {
@@ -29,9 +28,6 @@ open class GenPagesIndexIndex : BasePage {
         val _cache = this.`$`.renderCache
         return _cE("view", null, _uA(
             _cE("button", _uM("class" to "gray-button", "onClick" to _ctx.startFaceSearchDemo), "打开持续人脸搜索", 8, _uA(
-                "onClick"
-            )),
-            _cE("button", _uM("class" to "gray-button", "onClick" to _ctx.faceSearchDemo), "1:N人脸搜索识别", 8, _uA(
                 "onClick"
             )),
             _cE("button", _uM("class" to "gray-button", "onClick" to _ctx.addFaceSearchFeatureDemo), "1:N人脸搜索录入人脸", 8, _uA(
@@ -56,24 +52,20 @@ open class GenPagesIndexIndex : BasePage {
     }
     open var faceID: String by `$data`
     open var faceFeature: String by `$data`
-    open var faceJSONFeatures: String by `$data`
     open var faceAIResult: String by `$data`
     @Suppress("USELESS_CAST")
     override fun data(): Map<String, Any?> {
-        return _uM("faceID" to "Test", "faceFeature" to "faceFeature is a string with lenth 1024", "faceJSONFeatures" to "faceFeature is a string with lenth 1024", "faceAIResult" to "faceAIResult")
+        return _uM("faceID" to "Test", "faceFeature" to "faceFeature is a string with lenth 1024", "faceAIResult" to "faceAIResult")
     }
     open var startFaceSearchDemo = ::gen_startFaceSearchDemo_fn
     open fun gen_startFaceSearchDemo_fn() {
-        startFaceSearch(fun(jsonStr: String){
-            console.log("收到搜索结果:", jsonStr, " at pages/index/index.uvue:52")
+        val threshold: Number = 0.88
+        val oneTime = false
+        val highRes = false
+        val camId: Number = 0
+        startFaceSearch(threshold, oneTime, highRes, camId, fun(jsonStr: String){
+            console.log("收到搜索结果:", jsonStr, " at pages/index/index.uvue:58")
             this.faceAIResult = "【人脸搜索回调】\n" + jsonStr
-        }
-        )
-    }
-    open var faceSearchDemo = ::gen_faceSearchDemo_fn
-    open fun gen_faceSearchDemo_fn() {
-        faceSearch(fun(result: ResultJSON){
-            this.faceAIResult = JSON.stringify(result)
         }
         )
     }

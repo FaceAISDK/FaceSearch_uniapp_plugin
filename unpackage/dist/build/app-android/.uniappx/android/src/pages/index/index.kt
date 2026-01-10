@@ -63,16 +63,13 @@ open class GenPagesIndexIndex : BasePage {
     }
     open var startFaceSearchDemo = ::gen_startFaceSearchDemo_fn
     open fun gen_startFaceSearchDemo_fn() {
-        startFaceSearch(fun(jsonStr: String){
+        val threshold: Number = 0.88
+        val oneTime = false
+        val highRes = false
+        val camId: Number = 0
+        startFaceSearch(threshold, oneTime, highRes, camId, fun(jsonStr: String){
             console.log("收到搜索结果:", jsonStr)
             this.faceAIResult = "【人脸搜索回调】\n" + jsonStr
-        }
-        )
-    }
-    open var faceSearchDemo = ::gen_faceSearchDemo_fn
-    open fun gen_faceSearchDemo_fn() {
-        faceSearch(fun(result: ResultJSON){
-            this.faceAIResult = JSON.stringify(result)
         }
         )
     }

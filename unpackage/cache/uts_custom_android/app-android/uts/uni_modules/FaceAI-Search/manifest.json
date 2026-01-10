@@ -5,10 +5,10 @@
   },
   "files": {
     "utssdk/app-android/index.uts": {
-      "md5": "02aa5e71c90e6d4e0792971c20849299"
+      "md5": "0484499eb8164213ed29274d8ad5edab"
     },
     "utssdk/interface.uts": {
-      "md5": "75bf951e72ee08149c5200180ff5cfa6"
+      "md5": "2b497e39a5511a65d1680f17e0fabaee"
     },
     "utssdk/unierror.uts": {
       "md5": "53068dea99b353b641a6a40116974822"
@@ -20,16 +20,16 @@
       "md5": "79a87497c45adda0d02ecd0971d9b9d1"
     },
     "utssdk/app-android/FaceAISDKNative.kt": {
-      "md5": "ef6f3bad984eb5ace4612105832e14d2"
+      "md5": "cebc56e1e6bfd932f7a75e441db913f2"
     },
     "utssdk/app-android/FaceResultManager.kt": {
       "md5": "e0e186f5e6ce4af9e1708982a50a1e4a"
     },
     "utssdk/app-android/FaceSearchActivity.java": {
-      "md5": "b58b9e96da58bf0fb875e30dfeb0b1fb"
+      "md5": "119ab8efadfa8af52f0b3a118be76537"
     },
     "utssdk/app-android/config.json": {
-      "md5": "c586026be4bfcf66a8750dd481031c0c"
+      "md5": "297cc0ad8dc89b2751a5c40d16f12070"
     },
     "utssdk/app-android/libs/faceAILib-release.aar": {
       "md5": "9167032f51dc8ffd4a81b498c9bdbdc3"

@@ -6,7 +6,6 @@ import android.content.Intent
 import com.ai.face.faceSearch.search.FaceSearchFeatureManger
 import com.faceAI.demo.FaceSDKConfig
 import com.faceAI.demo.SysCamera.addFace.AddFaceImageActivity
-import com.faceAI.demo.SysCamera.search.FaceSearch1NActivity
 import com.faceAI.demo.base.utils.BitmapUtils
 import io.dcloud.uniapp.*
 import io.dcloud.uniapp.extapi.*
@@ -27,10 +26,9 @@ import kotlinx.coroutines.async
 import uts.sdk.modules.uniFaceAISDK.FaceResultManager
 import uts.sdk.modules.uniFaceAISDK.FaceSearchActivity
 import uts.sdk.modules.uniFaceAISDK.R
-typealias StartFaceSearch = (callback: (jsonResult: String) -> Unit) -> Unit
+typealias StartFaceSearch = (searchThreshold: Number, searchOneTime: Boolean, isCameraSizeHigh: Boolean, cameraId: Number, callback: (jsonResult: String) -> Unit) -> Unit
 typealias AddFaceSearchFeature = (faceID: String, addFacePerformanceMode: Number, callback: (result: ResultJSON) -> Unit) -> Unit
 typealias DeleteFaceSearchFeature = (faceID: String, callback: (result: ResultJSON) -> Unit) -> Unit
-typealias FaceSearch = (callback: (res: ResultJSON) -> Unit) -> Unit
 typealias InsertFaceSearchFeature = (faceID: String, faceFeature: String, tag: String, group: String, callback: (result: ResultJSON) -> Unit) -> Unit
 typealias InsertManyFeatures = (jsonFaceFeatures: String, callback: (result: ResultJSON) -> Unit) -> Unit
 open class ResultJSON (
@@ -45,7 +43,7 @@ open class ResultJSON (
     @JsonNotNull
     open var faceBase64: String,
 ) : UTSObject()
-val startFaceSearch: StartFaceSearch = fun(callback: (jsonResult: String) -> Unit) {
+val startFaceSearch: StartFaceSearch = fun(searchThreshold: Number, searchOneTime: Boolean, isCameraSizeHigh: Boolean, cameraId: Number, callback: (jsonResult: String) -> Unit) {
     UTSAndroid.getUniActivity()!!.runOnUiThread(fun(){
         val context = UTSAndroid.getUniActivity() as Activity
         FaceSDKConfig.init(context)
@@ -54,6 +52,10 @@ val startFaceSearch: StartFaceSearch = fun(callback: (jsonResult: String) -> Uni
         }
         )
         val intent = Intent(context, FaceSearchActivity().javaClass)
+        intent.putExtra("THRESHOLD_KEY", searchThreshold)
+        intent.putExtra("SEARCH_ONE_TIME", searchOneTime)
+        intent.putExtra("IS_CAMERA_SIZE_HIGH", isCameraSizeHigh)
+        intent.putExtra("CAMERA_ID", cameraId)
         context.startActivity(intent)
     }
     )
@@ -143,12 +145,4 @@ val addFaceSearchFeature: AddFaceSearchFeature = fun(faceID: String, addFacePerf
         }
     }
     )
-}
-val faceSearch: FaceSearch = fun(callback: (res: ResultJSON) -> Unit) {
-    val context = UTSAndroid.getUniActivity() as Activity
-    FaceSDKConfig.init(context)
-    val intent = Intent(context, FaceSearch1NActivity().javaClass)
-    context.startActivity(intent)
-    val resultJson = ResultJSON(code = 1, msg = "开发测试中", faceID = "faceID8", faceBase64 = "64", faceFeature = "")
-    callback(resultJson)
 }

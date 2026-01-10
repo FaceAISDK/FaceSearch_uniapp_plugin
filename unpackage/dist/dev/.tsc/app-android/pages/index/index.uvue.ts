@@ -4,7 +4,7 @@
 			insertManyFeatures,
 	        addFaceSearchFeature,
 			deleteFaceSearchFeature,
-			faceSearch,ResultJSON} from "@/uni_modules/FaceAI-Search";
+			ResultJSON} from "@/uni_modules/FaceAI-Search";
     import { JSON_FACE_FEATURES_DATA } from "./testData.uts";  //模拟服务端测试数据批量插入
 	
 	const __sfc__ = defineComponent({
@@ -13,7 +13,6 @@
 			return {
 				faceID: 'Test',
 				faceFeature: 'faceFeature is a string with lenth 1024',
-				faceJSONFeatures: 'faceFeature is a string with lenth 1024',
 				faceAIResult: 'faceAIResult'
 			}
 		},
@@ -23,37 +22,33 @@
 		
 		methods: {
 			
-			/**
-			 * 人脸搜索
-			 */
 			startFaceSearchDemo: function () {
-			    startFaceSearch((jsonStr: string) => {
-			        // 这里会持续不断地收到回调
-			        console.log("收到搜索结果:", jsonStr, " at pages/index/index.uvue:52");
-			        
-			        // 1. 简单展示，已经按照搜索匹配度降序排列
-			        this.faceAIResult = "【人脸搜索回调】\n" + jsonStr;
-			        
-			        // 2. 如果需要处理数据，建议包裹 try-catch 解析 JSON
-			        // try {
-			        //    const results = JSON.parse(jsonStr);
-			        //    if(results.length > 0) {
-			        //       // 可以在这里做业务逻辑，比如签到、开门等
-			        //    }
-			        // } catch(e) { console.error(e) }
-			    });
-			},
-			
-
-			/**
-			* 人脸搜索，插件beta版本
-			*/
-			faceSearchDemo: function () {
-				faceSearch(
-					(result: ResultJSON) => {
-						this.faceAIResult =JSON.stringify(result)
-					})
-			},
+			                // 示例参数值：
+			                const threshold = 0.88;    // 阈值,只有人脸库中匹配到的人脸相似度大于此才有结果返回
+			                const oneTime = false;     // 搜索页持续搜索接收结果 还是仅仅搜索一次返回一次结果
+			                const highRes = false;     // true，高分辨率模式，远距离识别更佳，但会牺牲性能和速度
+			                const camId = 0;           // 0，前置摄像头 1，后置摄像头。否则进入兼容模式（部分摄像头需适配）
+			                
+						    startFaceSearch(
+			                    threshold,
+			                    oneTime,
+			                    highRes,
+			                    camId,
+			                    (jsonStr: string) => {
+						            // 这里会持续不断地收到回调 
+						            console.log("收到搜索结果:", jsonStr, " at pages/index/index.uvue:58"); 
+						            this.faceAIResult = "【人脸搜索回调】\n" + jsonStr; 
+									
+									// 2. 如果需要处理数据，建议包裹 try-catch 解析 JSON
+									// try {
+									//    const results = JSON.parse(jsonStr);
+									//    if(results.length > 0) {
+									//       // 可以在这里做业务逻辑，比如签到、开门等
+									//    }
+									// } catch(e) { console.error(e) }
+						        }
+						    );  
+						},
 			
 			
 			/**
@@ -125,10 +120,6 @@ const _cache = this.$.renderCache
       class: "gray-button",
       onClick: _ctx.startFaceSearchDemo
     }), "打开持续人脸搜索", 8 /* PROPS */, ["onClick"]),
-    _cE("button", _uM({
-      class: "gray-button",
-      onClick: _ctx.faceSearchDemo
-    }), "1:N人脸搜索识别", 8 /* PROPS */, ["onClick"]),
     _cE("button", _uM({
       class: "gray-button",
       onClick: _ctx.addFaceSearchFeatureDemo

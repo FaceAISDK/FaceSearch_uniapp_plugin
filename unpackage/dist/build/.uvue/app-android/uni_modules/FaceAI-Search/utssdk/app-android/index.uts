@@ -9,15 +9,16 @@ import FaceResultManager from "uts.sdk.modules.uniFaceAISDK.FaceResultManager";
 import System from 'java.lang.System'; // 引入 System 类以获取时间戳
 import AddFaceImageActivity from "com.faceAI.demo.SysCamera.addFace.AddFaceImageActivity";
 import BitmapUtils from "com.faceAI.demo.base.utils.BitmapUtils";
-import FaceSearch1NActivity from 'com.faceAI.demo.SysCamera.search.FaceSearch1NActivity';
 import FaceSearchFeatureManger from 'com.ai.face.faceSearch.search.FaceSearchFeatureManger';
-//当前libs目录下为空，复用了HelloKitty 的
-//*******************************     下面是1:N 人脸搜索识别的方法（仅Android） ************************************************
 /**
  * 启动持续人脸搜索 Activity
  * 该方法会启动 Activity 并不关闭，持续回调数据
  */
-export const startFaceSearch: StartFaceSearch = function (callback: (jsonResult: string) => void) {
+/**
+ * 启动持续人脸搜索 Activity
+ * 该方法会启动 Activity 并不关闭，持续回调数据
+ */
+export const startFaceSearch: StartFaceSearch = function (searchThreshold: number, searchOneTime: boolean, isCameraSizeHigh: boolean, cameraId: number, callback: (jsonResult: string) => void) {
     UTSAndroid.getUniActivity()!.runOnUiThread(() => {
         const context = UTSAndroid.getUniActivity() as Activity;
         FaceSDKConfig.init(context);
@@ -27,7 +28,10 @@ export const startFaceSearch: StartFaceSearch = function (callback: (jsonResult:
         });
         // 2. 启动搜索 Activity
         const intent = new Intent(context, FaceSearchActivity().javaClass);
-        // 如果需要设置 Activity 为 SingleTop 或其他启动模式，可以在这里 addFlags
+        intent.putExtra("THRESHOLD_KEY", searchThreshold);
+        intent.putExtra("SEARCH_ONE_TIME", searchOneTime);
+        intent.putExtra("IS_CAMERA_SIZE_HIGH", isCameraSizeHigh);
+        intent.putExtra("CAMERA_ID", cameraId);
         context.startActivity(intent);
     });
 };
@@ -183,22 +187,4 @@ export const addFaceSearchFeature: AddFaceSearchFeature = function (faceID: stri
             }
         }
     });
-};
-/**
- * 1:N，M：N 人脸搜索，开发测试中 完善一下参数
- *
- */
-export const faceSearch: FaceSearch = function (callback: (res: ResultJSON) => void) {
-    const context = UTSAndroid.getUniActivity() as Activity;
-    FaceSDKConfig.init(context);
-    const intent = new Intent(context, FaceSearch1NActivity().javaClass);
-    context.startActivity(intent);
-    const resultJson: ResultJSON = {
-        code: 1,
-        msg: "开发测试中",
-        faceID: "faceID8",
-        faceBase64: "64",
-        faceFeature: ""
-    };
-    callback(resultJson);
 };
