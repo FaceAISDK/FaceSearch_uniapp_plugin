@@ -5,12 +5,12 @@
   },
   "files": {
     "pages/index/index.kt": {
-      "md5": "a73e652990dda0489079d8b2ef4795cf0a77a1ea",
+      "md5": "c835026cbab6ec1400cab63c90c05c158080af71",
       "class": "GenPagesIndexIndex"
     },
     "index.kt": {
-      "class": "",
-      "md5": "e4b02abc5c9dc952272b8b6b6cf3960cc8239dbf"
+      "md5": "e4b02abc5c9dc952272b8b6b6cf3960cc8239dbf",
+      "class": ""
     }
   }
 }

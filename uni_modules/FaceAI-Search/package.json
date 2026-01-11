@@ -2,11 +2,11 @@
 	"id": "FaceAI-Search",
 	"displayName": "FaceAI-人脸搜索识别",
 	"version": "1.0.1",
-	"description": "Android 1:N人脸搜索识别，目前不支持iOS，FaceAISDK.Service@gmail.com",
+	"description": "Android 1:N人脸搜索识别，可用于小区门禁多人身份验证等场景",
 	"keywords": [
-        "人脸搜索"
+        "人脸搜索,离线搜索"
     ],
-	"repository": "",
+	"repository": "https://github.com/FaceAISDK/FaceSearch_uniapp_plugin",
 	"engines": {
 		"HBuilderX": "^3.6.8",
 		"uni-app": "^4.76",
@@ -31,9 +31,9 @@
 			"permissions": "相机"
 		},
 		"npmurl": "",
-		"darkmode": "x",
-		"i18n": "x",
-		"widescreen": "x"
+		"darkmode": "√",
+		"i18n": "√",
+		"widescreen": "√"
 	},
 	"uni_modules": {
 		"dependencies": [],
@@ -65,18 +65,18 @@
 						"harmony": "-"
 					},
 					"mp": {
-						"weixin": "-",
-						"alipay": "-",
-						"toutiao": "-",
-						"baidu": "-",
-						"kuaishou": "-",
-						"jd": "-",
-						"harmony": "-",
-						"qq": "-",
-						"lark": "-"
+						"weixin": "x",
+						"alipay": "x",
+						"toutiao": "x",
+						"baidu": "x",
+						"kuaishou": "x",
+						"jd": "x",
+						"harmony": "x",
+						"qq": "x",
+						"lark": "x"
 					},
 					"quickapp": {
-						"huawei": "-",
+						"huawei": "x",
 						"union": "-"
 					}
 				},
@@ -91,10 +91,10 @@
                             "minVersion": "21"
                         },
 						"ios": "-",
-						"harmony": "-"
+						"harmony": "x"
 					},
 					"mp": {
-						"weixin": "-"
+						"weixin": "x"
 					}
 				}
 			}

@@ -27,7 +27,7 @@ open class GenPagesIndexIndex : BasePage {
         val _ctx = this
         val _cache = this.`$`.renderCache
         return _cE("view", null, _uA(
-            _cE("button", _uM("class" to "gray-button", "onClick" to _ctx.startFaceSearchDemo), "打开持续人脸搜索", 8, _uA(
+            _cE("button", _uM("class" to "gray-button", "onClick" to _ctx.startFaceSearchDemo), "1:N人脸搜索", 8, _uA(
                 "onClick"
             )),
             _cE("button", _uM("class" to "gray-button", "onClick" to _ctx.addFaceSearchFeatureDemo), "1:N人脸搜索录入人脸", 8, _uA(

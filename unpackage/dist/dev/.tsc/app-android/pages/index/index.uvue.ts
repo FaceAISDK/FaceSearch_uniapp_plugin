@@ -23,7 +23,7 @@
 		methods: {
 			
 			startFaceSearchDemo: function () {
-			                // 示例参数值：
+
 			                const threshold = 0.88;    // 阈值,只有人脸库中匹配到的人脸相似度大于此才有结果返回
 			                const oneTime = false;     // 搜索页持续搜索接收结果 还是仅仅搜索一次返回一次结果
 			                const highRes = false;     // true，高分辨率模式，远距离识别更佳，但会牺牲性能和速度
@@ -35,7 +35,7 @@
 			                    highRes,
 			                    camId,
 			                    (jsonStr: string) => {
-						            // 这里会持续不断地收到回调 
+						            // 这里会持续不断地收到json list Str回调，按照降序排列好了 
 						            console.log("收到搜索结果:", jsonStr, " at pages/index/index.uvue:58"); 
 						            this.faceAIResult = "【人脸搜索回调】\n" + jsonStr; 
 									
@@ -119,7 +119,7 @@ const _cache = this.$.renderCache
     _cE("button", _uM({
       class: "gray-button",
       onClick: _ctx.startFaceSearchDemo
-    }), "打开持续人脸搜索", 8 /* PROPS */, ["onClick"]),
+    }), "1:N人脸搜索", 8 /* PROPS */, ["onClick"]),
     _cE("button", _uM({
       class: "gray-button",
       onClick: _ctx.addFaceSearchFeatureDemo

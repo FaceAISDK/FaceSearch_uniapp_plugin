@@ -1,6 +1,6 @@
 <template>
 	<view>
-		<button class="gray-button" @click="startFaceSearchDemo">打开持续人脸搜索</button>
+		<button class="gray-button" @click="startFaceSearchDemo">1:N人脸搜索</button>
 		<button class="gray-button" @click="addFaceSearchFeatureDemo">1:N人脸搜索录入人脸</button>
 		<button class="gray-button" @click="deleteFaceSearchFeatureDemo">删除人脸搜索特征值</button>
 		<button class="gray-button" @click="insertFaceSearchFeatureDemo">同步人脸搜索特征值</button>
@@ -53,7 +53,7 @@
 					highRes,
 					camId,
 					(jsonStr) => {
-						// 这里会持续不断地收到回调 
+						// 这里会持续不断地收到json list Str回调，按照降序排列好了 
 						console.log("收到搜索结果:", jsonStr);
 						this.faceAIResult = "【人脸搜索回调】\n" + jsonStr;
 
