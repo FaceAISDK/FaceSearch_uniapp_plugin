@@ -7,7 +7,8 @@
         "人脸搜索",
         "离线搜索",
         "活体检测",
-        "人脸采集"
+        "人脸采集",
+        ""
     ],
 	"repository": "https://github.com/FaceAISDK/FaceSearch_uniapp_plugin",
 	"engines": {
