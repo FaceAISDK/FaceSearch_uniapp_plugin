@@ -640,6 +640,8 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
             VerifyStatus.ALIVE_DETECT_TYPE_ENUM.HEAD_RIGHT -> R.string.head_turn_right_tips
             VerifyStatus.ALIVE_DETECT_TYPE_ENUM.HEAD_UP -> R.string.no_look_up_tips
             VerifyStatus.ALIVE_DETECT_TYPE_ENUM.HEAD_DOWN -> R.string.no_look_down_tips
+			VerifyStatus.ALIVE_DETECT_TYPE_ENUM.FACE_UNSTABLE -> R.string.keep_face_still_tips
+		
             else -> 0
         }
 

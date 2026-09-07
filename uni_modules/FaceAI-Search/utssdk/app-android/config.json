@@ -1,15 +1,15 @@
 {
-  "minSdkVersion": "21",
+  "minSdkVersion": "23",
   "abis": [
   	    "armeabi-v7a",
 		"arm64-v8a"
   ],
 	"dependencies": [
-	"io.github.faceaisdk:Android:2026.09.07.live",
-	"androidx.camera:camera-core:1.4.2",
-	"androidx.camera:camera-camera2:1.4.2",
-	"androidx.camera:camera-lifecycle:1.4.2",
-	"androidx.camera:camera-view:1.4.2",
+	"io.github.faceaisdk:Android:2026.09.07.capt2",
+	"androidx.camera:camera-core:1.5.2",
+	"androidx.camera:camera-camera2:1.5.2",
+	"androidx.camera:camera-lifecycle:1.5.2",
+	"androidx.camera:camera-view:1.5.2",
 	"io.github.cymchad:BaseRecyclerViewAdapterHelper4:4.1.1",
 	"com.tencent:mmkv:1.3.14",
 	"com.google.code.gson:gson:2.13.2",
