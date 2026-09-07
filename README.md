@@ -1,3 +1,6 @@
+  
+![FaceSearch](https://i.postimg.cc/Gpcjk3s5/face-search.png)
+  
 <div align="center">
   <h1>FaceAI Search</h1>
   <p>Android 端侧离线 1:N 人脸搜索识别插件</p>
