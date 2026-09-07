@@ -76,9 +76,7 @@ export type CaptureFaceByCamera = (
  * 开启持续人脸搜索 (Activity 常驻)
  * @param searchThreshold 人脸搜索阈值 (只有人脸库中匹配到的人脸相似度大于此才有结果返回)
  * @param searchOneTime 是否仅搜索一次 (搜索页持续搜索接收结果 还是仅仅搜索一次返回一次结果)
- * @param searchTimeOut [3,22]秒 仅仅是oneTime=true才生效，超时没有大于threshold搜索结果自动关闭页面
- * @param isCameraSizeHigh 是否高分辨率 (true，高分辨率模式，远距离识别更佳，但会牺牲性能和速度.以及定制设备可能黑屏不兼容)
- * @param cameraId 摄像头ID (前置摄像头 1，后置摄像头。否则进入兼容模式（部分摄像头需适配）)
+ * @param searchTimeOut 搜索超时时间，单位毫秒，范围 3000~6000；仅 searchOneTime=true 时用于无匹配结果后自动关闭页面
  * @param callback 接收搜索结果 JSON 字符串的回调
  */
 export type faceSearchByCamera = (

@@ -20,7 +20,7 @@
             :linear-zoom="0.12"
             :rotation-degrees="-1"
             :show-face-cover="false"
-            :auto-start="false"
+            :auto-start="true"
             @ready="onCaptureReady"
             @result="onCaptureResult"
             @tips="onCaptureTips"
@@ -91,30 +91,16 @@ import {
   CaptureFaceCameraChange
 } from "@/uni_modules/FaceAI-Search"
 
-function readStoredBoolean(key: string): boolean {
-  const value = uni.getStorageSync(key)
-  if (typeof value == "boolean") {
-    return value as boolean
-  }
-  if (typeof value == "string") {
-    return (value as string) == "true"
-  }
-  return false
-}
-
 function toImageSource(base64: string): string {
   if (base64.length == 0 || base64.startsWith("data:image/")) return base64
   return `data:image/jpeg;base64,${base64}`
 }
 
 const CAMERA_PERMISSIONS: Array<string> = ["android.permission.CAMERA"]
-const CAMERA_PERMISSION_REQUESTED_KEY = "face_ai_camera_permission_requested"
-const CAMERA_PERMISSION_PERMANENTLY_DENIED_KEY = "face_ai_camera_permission_permanently_denied"
 const captureComponentRef = ref<ComponentPublicInstance | null>(null)
 const cameraPermissionGranted = ref(false)
-const permissionPermanentlyDenied = ref(readStoredBoolean(CAMERA_PERMISSION_PERMANENTLY_DENIED_KEY))
+const permissionPermanentlyDenied = ref(false)
 const permissionRequesting = ref(false)
-const permissionActivityAvailable = ref(true)
 const permissionTitleText = ref("正在检查相机权限")
 const permissionDescriptionText = ref("相机仅用于本地人脸抓拍，图像不会上传。")
 const permissionActionText = ref("授权相机")
@@ -131,8 +117,6 @@ const captureInProgress = ref(false)
 const captureButtonText = ref("开始抓拍")
 const currentCameraId = ref(0)
 let pageReady = false
-let pageActive = true
-let returningFromPermissionSettings = false
 
 function resetCaptureSessionState() {
   captureReady.value = false
@@ -148,9 +132,7 @@ function applyCameraPermissionGranted() {
   const permissionChanged = !cameraPermissionGranted.value
   cameraPermissionGranted.value = true
   permissionRequesting.value = false
-  permissionActivityAvailable.value = true
   permissionPermanentlyDenied.value = false
-  uni.removeStorageSync(CAMERA_PERMISSION_PERMANENTLY_DENIED_KEY)
   if (permissionChanged) {
     resetCaptureSessionState()
   }
@@ -162,18 +144,15 @@ function applyCameraPermissionGranted() {
 function applyCameraPermissionDenied(permanentlyDenied: boolean, message: string) {
   cameraPermissionGranted.value = false
   permissionRequesting.value = false
-  permissionActivityAvailable.value = true
   permissionPermanentlyDenied.value = permanentlyDenied
   resetCaptureSessionState()
 
   if (permanentlyDenied) {
-    uni.setStorageSync(CAMERA_PERMISSION_PERMANENTLY_DENIED_KEY, true)
     permissionTitleText.value = "请在系统设置中开启相机权限"
     permissionDescriptionText.value = "相机权限已被禁止再次询问。开启后返回本页，页面会自动重新检查。"
   } else {
-    uni.removeStorageSync(CAMERA_PERMISSION_PERMANENTLY_DENIED_KEY)
     permissionTitleText.value = "需要相机权限"
-    permissionDescriptionText.value = "相机仅用于本地人脸抓拍，图像不会上传。授权后由你手动开始抓拍。"
+    permissionDescriptionText.value = "相机仅用于本地人脸抓拍，图像不会上传。授权后会自动进入抓拍。"
   }
   permissionActionText.value = "授权相机"
   statusText.value = message
@@ -181,7 +160,6 @@ function applyCameraPermissionDenied(permanentlyDenied: boolean, message: string
 
 function applyPermissionActivityUnavailable() {
   permissionRequesting.value = false
-  permissionActivityAvailable.value = false
   permissionTitleText.value = "暂时无法检查相机权限"
   permissionDescriptionText.value = "当前页面尚未连接 Android Activity，请稍后重试。"
   permissionActionText.value = "重新检查"
@@ -194,12 +172,12 @@ function updateLayout(width: number, height: number) {
 
 function onCaptureReady() {
   captureReady.value = true
-  captureStarted.value = false
-  captureInProgress.value = false
-  captureButtonText.value = "开始抓拍"
+  captureStarted.value = true
+  captureInProgress.value = true
+  captureButtonText.value = "抓拍中…"
   currentCameraId.value = 0
-  statusText.value = "标准模式组件已就绪，点击“开始抓拍”"
-  captureTipText.value = "点击按钮后请摆正头部并将人脸置于取景框内"
+  statusText.value = "标准模式组件已启动"
+  captureTipText.value = "请摆正头部并将人脸置于取景框内"
 }
 
 function onCaptureResult(result: CaptureFaceResult) {
@@ -273,7 +251,6 @@ function refreshCameraPermission(): boolean {
     return cameraPermissionGranted.value
   }
 
-  permissionActivityAvailable.value = true
   const granted = UTSAndroid.checkSystemPermissionGranted(
     activity,
     CAMERA_PERMISSIONS
@@ -300,7 +277,6 @@ function requestCameraPermission() {
     return
   }
 
-  permissionActivityAvailable.value = true
   if (UTSAndroid.checkSystemPermissionGranted(activity, CAMERA_PERMISSIONS)) {
     applyCameraPermissionGranted()
     return
@@ -311,26 +287,17 @@ function requestCameraPermission() {
   permissionDescriptionText.value = "请在系统弹窗中允许相机权限。"
   permissionActionText.value = "正在申请…"
   statusText.value = "等待相机权限授权结果…"
-  uni.setStorageSync(CAMERA_PERMISSION_REQUESTED_KEY, true)
-
   UTSAndroid.requestSystemPermission(
     activity,
     CAMERA_PERMISSIONS,
     (allRight: boolean, _grantedList: Array<string>) => {
-      if (!pageActive) return
-      const currentActivity = UTSAndroid.getUniActivity()
-      const granted = currentActivity != null && UTSAndroid.checkSystemPermissionGranted(
-        currentActivity,
-        CAMERA_PERMISSIONS
-      )
-      if (allRight && granted) {
+      if (allRight) {
         applyCameraPermissionGranted()
       } else {
         applyCameraPermissionDenied(false, "相机权限未授予，点击按钮可重新申请")
       }
     },
     (doNotAskAgain: boolean, _grantedList: Array<string>) => {
-      if (!pageActive) return
       const currentActivity = UTSAndroid.getUniActivity()
       if (
         currentActivity != null &&
@@ -356,7 +323,6 @@ function openPermissionSettings() {
     applyPermissionActivityUnavailable()
     return
   }
-  returningFromPermissionSettings = true
   statusText.value = "已打开系统设置，请允许相机权限后返回"
   UTSAndroid.gotoSystemPermissionActivity(activity, CAMERA_PERMISSIONS)
 }
@@ -365,26 +331,14 @@ onReady(() => {
   pageReady = true
   const windowInfo = uni.getWindowInfo()
   updateLayout(windowInfo.windowWidth, windowInfo.windowHeight)
-  const granted = refreshCameraPermission()
-  const requestedBefore = readStoredBoolean(CAMERA_PERMISSION_REQUESTED_KEY)
-  if (!granted && permissionActivityAvailable.value && !requestedBefore && !permissionPermanentlyDenied.value) {
+  if (!refreshCameraPermission()) {
     requestCameraPermission()
   }
 })
 
 onShow(() => {
-  if (!pageReady || permissionRequesting.value) return
-  const returnedFromSettings = returningFromPermissionSettings
-  returningFromPermissionSettings = false
-  const granted = refreshCameraPermission()
-  if (returnedFromSettings && !granted && permissionActivityAvailable.value) {
-    applyCameraPermissionDenied(true, "系统设置中仍未开启相机权限")
-  }
-})
-
-onUnload(() => {
-  pageActive = false
-  permissionRequesting.value = false
+  if (!pageReady) return
+  refreshCameraPermission()
 })
 
 onResize((options: OnResizeOptions) => {

@@ -223,15 +223,16 @@ public class FaceSearchActivity extends AbsBaseActivity {
             case NO_MATCHED:
                 setSecondTips(R.string.no_matched_face);
                 if (searchOneTime) {
-					if((System.currentTimeMillis() - searchStartTime) > searchTimeOut){
-		            	FaceResultManager.INSTANCE.sendResult("[]", 0.0f, "");
-		             	FaceSearchActivity.this.finish();			
-					}
-                }else{
-					FaceResultManager.INSTANCE.sendResult("[]", 0.0f, "");
-				}
-			case FACE_ANGLE_NOT_FIT:
-			    setSecondTips(R.string.face_angle_not_fit);
+                    if ((System.currentTimeMillis() - searchStartTime) > searchTimeOut) {
+                        FaceResultManager.INSTANCE.sendResult("[]", 0.0f, "");
+                        FaceSearchActivity.this.finish();
+                    }
+                } else {
+                    FaceResultManager.INSTANCE.sendResult("[]", 0.0f, "");
+                }
+                break;
+            case FACE_ANGLE_NOT_FIT:
+                setSecondTips(R.string.face_angle_not_fit);
                 break;
             case FACE_DIR_EMPTY:
                 setSearchTips(R.string.local_face_database_empty);
@@ -314,6 +315,9 @@ public class FaceSearchActivity extends AbsBaseActivity {
     public void onDestroy() {
         super.onDestroy();
         FaceSearchEngine.Companion.getInstance().stopSearchProcess();
+        if (!isChangingConfigurations()) {
+            FaceResultManager.INSTANCE.clear();
+        }
     }
 
     @Override

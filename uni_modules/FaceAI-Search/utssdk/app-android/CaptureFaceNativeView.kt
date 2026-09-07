@@ -53,6 +53,7 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
     private val resultExecutor: ExecutorService = Executors.newSingleThreadExecutor()
     private val encodingResult = AtomicBoolean(false)
     private val waitingForRetry = AtomicBoolean(false)
+    private val retryScheduled = AtomicBoolean(false)
 
     @Volatile
     private var cameraProvider: ProcessCameraProvider? = null
@@ -286,13 +287,35 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
     }
 
     fun retry() {
-        runOnMainThread {
-            if (
-                started && !released &&
-                waitingForRetry.compareAndSet(true, false)
-            ) {
-                faceDispose?.retry()
+        if (
+            !started || released || !waitingForRetry.get() ||
+            !retryScheduled.compareAndSet(false, true)
+        ) {
+            return
+        }
+
+        val currentSession = sessionId
+        try {
+            analysisExecutor.execute {
+                try {
+                    if (
+                        started && !released && currentSession == sessionId &&
+                        waitingForRetry.get()
+                    ) {
+                        val dispose = faceDispose ?: return@execute
+                        dispose.retry()
+                        // SDK 状态重置完成后再放行帧分析，避免首帧与 retry() 并发。
+                        waitingForRetry.set(false)
+                    }
+                } catch (e: Exception) {
+                    notifyError("CAPTURE_RETRY_FAILED", e.message ?: "Capture retry failed")
+                } finally {
+                    retryScheduled.set(false)
+                }
             }
+        } catch (e: Exception) {
+            retryScheduled.set(false)
+            notifyError("CAPTURE_RETRY_FAILED", e.message ?: "Capture retry failed")
         }
     }
 
@@ -441,7 +464,7 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
                         if (
                             started && !released && currentSession == sessionId &&
                             analyzerGeneration == cameraBindingGeneration &&
-                            !encodingResult.get()
+                            !encodingResult.get() && !waitingForRetry.get()
                         ) {
                             faceDispose?.dispose(DataConvertUtils.imageProxy2Bitmap(imageProxy))
                         }
@@ -611,6 +634,7 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
         previewFallbackTried = false
         encodingResult.set(false)
         waitingForRetry.set(false)
+        retryScheduled.set(false)
         try {
             (findActivity() as? LifecycleOwner)?.let { lifecycleOwner ->
                 previewView.previewStreamState.removeObservers(lifecycleOwner)
