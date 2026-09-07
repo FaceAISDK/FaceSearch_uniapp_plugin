@@ -2,8 +2,8 @@
 	"name": "人脸搜索",
 	"appid": "__UNI__C3F93BB",
 	"description": "相机人脸搜索识别，图片人脸搜索，以及活体检测Beta",
-	"versionName": "2026.09.04",
-	"versionCode": "20260904",
+	"versionName": "2026.09.07",
+	"versionCode": "20260907",
 	"uni-app-x": {},
 	/* 快应用特有相关 */
 	"quickapp": {},
