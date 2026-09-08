@@ -891,7 +891,8 @@
       :cameraId="0"
       :linearZoom="0.12"
       :rotationDegrees="-1"
-      :showFaceCover="false"
+      :showFaceCover="true"
+      :showFaceCoverTips="true"
       :autoStart="true"
       style="width: 750rpx; height: 900rpx; background-color: #000000;"
       @ready="onCaptureReady"
@@ -978,7 +979,8 @@ export default {
         :cameraId="0"
         :linearZoom="0.12"
         :rotationDegrees="-1"
-        :showFaceCover="false"
+        :showFaceCover="true"
+        :showFaceCoverTips="true"
         :autoStart="true"
         style="width: 750rpx; height: 850rpx; background-color: #000000;"
         @ready="onCaptureReady"
@@ -1261,7 +1263,8 @@ export default {
               <tr><td><code>cameraId</code></td><td>Number / <code>0</code></td><td><code>0</code> 前置，<code>1</code> 后置；启动时不存在会尝试降级到可用摄像头。</td><td>自拍默认 0</td></tr>
               <tr><td><code>linearZoom</code></td><td>Number / <code>0.12</code></td><td>线性变焦，原生层会限制到 <code>0–1</code>。</td><td>先保持默认</td></tr>
               <tr><td><code>rotationDegrees</code></td><td>Number / <code>-1</code></td><td><code>-1</code> 跟随显示方向；也可固定为 <code>0/90/180/270</code>。</td><td><span class="badge">推荐 -1</span></td></tr>
-              <tr><td><code>showFaceCover</code></td><td>Boolean / <code>false</code></td><td>是否显示原生人脸引导遮罩。</td><td>按 UI 需求</td></tr>
+              <tr><td><code>showFaceCover</code></td><td>Boolean / <code>true</code></td><td>只控制原生圆形人脸引导遮罩，不控制提示文字；圆形每侧边距为组件短边的 <code>1/13</code>。</td><td>默认显示</td></tr>
+              <tr><td><code>showFaceCoverTips</code></td><td>Boolean / <code>false</code></td><td>独立控制原生过程提示文字；文字位于组件顶部与圆形框上沿之间的中间位置。</td><td>按 UI 需求开启</td></tr>
               <tr><td><code>autoStart</code></td><td>Boolean / <code>true</code></td><td>组件载入后自动调用 <code>start()</code>。</td><td>权限通过后再挂载组件</td></tr>
             </tbody>
           </table>

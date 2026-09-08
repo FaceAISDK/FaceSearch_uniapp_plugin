@@ -18,6 +18,7 @@ type CaptureFaceProps = {
   linearZoom: number
   rotationDegrees: number
   showFaceCover: boolean
+  showFaceCoverTips: boolean
   autoStart: boolean
 }
 
@@ -28,6 +29,7 @@ const props = withDefaults(defineProps<CaptureFaceProps>(), {
   linearZoom: 0.12,
   rotationDegrees: -1,
   showFaceCover: false,
+  showFaceCoverTips: false,
   autoStart: true
 })
 
@@ -43,6 +45,7 @@ let captureContext: CaptureFaceViewContext | null = null
 
 function start() {
   captureContext?.setFaceCoverVisible(props.showFaceCover)
+  captureContext?.setFaceCoverTipsVisible(props.showFaceCoverTips)
   captureContext?.start(
     props.performanceMode,
     props.needLivenessCheck,
@@ -55,6 +58,7 @@ function start() {
 function onNativeViewInit(event: UniNativeViewInitEvent) {
   captureContext = new CaptureFaceViewContext(event.detail.element)
   captureContext?.setFaceCoverVisible(props.showFaceCover)
+  captureContext?.setFaceCoverTipsVisible(props.showFaceCoverTips)
   captureContext?.setResultCallback((result: CaptureFaceResult) => {
     emit("result", result)
   })

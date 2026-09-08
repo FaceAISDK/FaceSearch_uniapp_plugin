@@ -5,15 +5,19 @@ import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.pm.PackageManager
-import android.graphics.Matrix
 import android.graphics.Color
+import android.graphics.Matrix
+import android.graphics.drawable.GradientDrawable
 import android.hardware.display.DisplayManager
 import android.os.Looper
 import android.util.Log
 import android.util.Size
+import android.util.TypedValue
+import android.view.Gravity
 import android.view.Surface
 import android.view.View
 import android.widget.FrameLayout
+import android.widget.TextView
 import androidx.annotation.Keep
 import androidx.camera.core.AspectRatio
 import androidx.camera.core.CameraControl
@@ -49,6 +53,7 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
 
     private val previewView = PreviewView(context)
     private val faceCoverView = FaceCoverView(context)
+    private val faceCoverTipsView = TextView(context)
     private val analysisExecutor: ExecutorService = Executors.newSingleThreadExecutor()
     private val resultExecutor: ExecutorService = Executors.newSingleThreadExecutor()
     private val encodingResult = AtomicBoolean(false)
@@ -75,6 +80,8 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
     private var rotationDegrees = AUTO_ROTATION_DEGREES
     @Volatile
     private var faceCoverVisible = false
+    @Volatile
+    private var faceCoverTipsVisible = false
     private var started = false
     private var released = false
     private var sessionId = 0L
@@ -121,13 +128,31 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
 
     init {
         setBackgroundColor(Color.BLACK)
+        clipChildren = true
+        clipToPadding = true
 
         // native-view 中 TextureView 可能因为宿主合成层级而只显示黑色。
         // PERFORMANCE 优先使用 SurfaceView，更适合 CameraX 原生预览嵌入场景。
         previewView.implementationMode = PreviewView.ImplementationMode.PERFORMANCE
         // 居中裁剪相机画面以铺满组件，避免宽高比不一致时出现上下黑边。
         previewView.scaleType = PreviewView.ScaleType.FILL_CENTER
+        // FaceCoverView 自带的文字与圆形共用 visibility，无法分别控制；清空后改由
+        // 独立 TextView 显示过程提示，让 showFaceCover 只负责圆形遮罩。
+        faceCoverView.setTipsText(0)
         faceCoverView.visibility = View.GONE
+        faceCoverTipsView.apply {
+            text = context.getString(R.string.sdk_init)
+            setTextColor(Color.WHITE)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 17f)
+            gravity = Gravity.CENTER
+            includeFontPadding = false
+            setPadding(dp(16), dp(6), dp(16), dp(6))
+            background = GradientDrawable().apply {
+                setColor(Color.argb(153, 0, 0, 0))
+                cornerRadius = dp(18).toFloat()
+            }
+            visibility = View.GONE
+        }
         addView(
             previewView,
             LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
@@ -135,6 +160,17 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
         addView(
             faceCoverView,
             LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
+        )
+        addView(
+            faceCoverTipsView,
+            LayoutParams(
+                LayoutParams.WRAP_CONTENT,
+                LayoutParams.WRAP_CONTENT,
+                Gravity.TOP or Gravity.CENTER_HORIZONTAL
+            ).apply {
+                marginStart = dp(10)
+                marginEnd = dp(10)
+            }
         )
     }
 
@@ -161,6 +197,50 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
                 applyFaceCoverVisibility()
             }
         }
+    }
+
+    fun setFaceCoverTipsVisible(visible: Boolean) {
+        faceCoverTipsVisible = visible
+        runOnMainThread {
+            if (!released) {
+                applyFaceCoverTipsVisibility()
+            }
+        }
+    }
+
+    override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
+        super.onLayout(changed, left, top, right, bottom)
+
+        val contentWidth = width
+        val contentHeight = height
+        if (contentWidth <= 0 || contentHeight <= 0) return
+
+        val shortEdge = minOf(contentWidth, contentHeight)
+        val circleMargin = shortEdge / FACE_COVER_MARGIN_DIVISOR
+
+        // SDK 的 FaceCoverView 会在竖屏时将圆心上移一个默认 margin。把它的布局
+        // 高度向下扩展两个 margin，正好抵消该偏移，同时保持遮罩覆盖整个可见区域。
+        val coverHeight = if (contentWidth <= contentHeight) {
+            contentHeight + circleMargin * 2
+        } else {
+            contentHeight
+        }
+        faceCoverView.layout(0, 0, contentWidth, coverHeight)
+        faceCoverView.setMargin(circleMargin)
+
+        // 文本框在组件顶部与圆形上沿之间垂直居中。
+        val circleRadius = shortEdge / 2f - circleMargin
+        val circleTop = contentHeight / 2f - circleRadius
+        val tipsWidth = faceCoverTipsView.measuredWidth
+        val tipsHeight = faceCoverTipsView.measuredHeight
+        val tipsLeft = (contentWidth - tipsWidth) / 2
+        val tipsTop = ((circleTop - tipsHeight) / 2f).toInt().coerceAtLeast(0)
+        faceCoverTipsView.layout(
+            tipsLeft,
+            tipsTop,
+            tipsLeft + tipsWidth,
+            tipsTop + tipsHeight
+        )
     }
 
     /**
@@ -664,17 +744,16 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
             VerifyStatus.ALIVE_DETECT_TYPE_ENUM.HEAD_RIGHT -> R.string.head_turn_right_tips
             VerifyStatus.ALIVE_DETECT_TYPE_ENUM.HEAD_UP -> R.string.no_look_up_tips
             VerifyStatus.ALIVE_DETECT_TYPE_ENUM.HEAD_DOWN -> R.string.no_look_down_tips
-			VerifyStatus.ALIVE_DETECT_TYPE_ENUM.FACE_UNSTABLE -> R.string.keep_face_still_tips
-		
+            VerifyStatus.ALIVE_DETECT_TYPE_ENUM.FACE_UNSTABLE -> R.string.keep_face_still_tips
+
             else -> 0
         }
 
         val message = if (textRes != 0) context.getString(textRes) else "Tips Code: $actionCode"
-        if (faceCoverVisible && textRes != 0) {
-            faceCoverView.setTipsText(textRes)
+        if (textRes != 0) {
+            faceCoverTipsView.text = message
+            applyFaceCoverTipsVisibility()
         }
-        // FaceCoverView 的内部提示刷新可能修改自身 visibility；业务明确关闭时必须兜底隐藏。
-        applyFaceCoverVisibility()
         try {
             tipsCallback?.invoke(actionCode, message)
         } catch (e: Exception) {
@@ -815,6 +894,13 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
         faceCoverView.visibility = if (faceCoverVisible) View.VISIBLE else View.GONE
     }
 
+    private fun applyFaceCoverTipsVisibility() {
+        faceCoverTipsView.visibility = if (faceCoverTipsVisible) View.VISIBLE else View.GONE
+    }
+
+    private fun dp(value: Int): Int =
+        (value * resources.displayMetrics.density + 0.5f).toInt()
+
     private fun toSurfaceRotation(value: Int): Int {
         return when (value) {
             90 -> Surface.ROTATION_90
@@ -852,5 +938,6 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
         const val TAG = "CaptureFaceNativeView"
         const val PREVIEW_START_TIMEOUT_MS = 2500L
         const val AUTO_ROTATION_DEGREES = -1
+        const val FACE_COVER_MARGIN_DIVISOR = 13
     }
 }

@@ -120,6 +120,10 @@ export class CaptureFaceViewContext {
         this.nativeView.setFaceCoverVisible(visible)
     }
 
+    setFaceCoverTipsVisible(visible: boolean): void {
+        this.nativeView.setFaceCoverTipsVisible(visible)
+    }
+
     start(
         performanceMode: number,
         needLivenessCheck: boolean,

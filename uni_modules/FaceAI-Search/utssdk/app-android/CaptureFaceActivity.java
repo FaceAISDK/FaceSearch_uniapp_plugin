@@ -32,7 +32,7 @@ public class CaptureFaceActivity extends AbsBaseActivity {
     private int performanceMode = CaptureFaceDispose.PERFORMANCE_MODE_FAST;
     private boolean needLivenessCheck = true;
     private int cameraId = 0;
-    private float linearZoom = 0.12f;
+    private float linearZoom = 0.01f;
     private int rotationDegrees = -1;
 
     @Override
@@ -47,6 +47,7 @@ public class CaptureFaceActivity extends AbsBaseActivity {
         FrameLayout root = new FrameLayout(this);
         captureFaceView = new CaptureFaceNativeView(this);
         captureFaceView.setFaceCoverVisible(true);
+        captureFaceView.setFaceCoverTipsVisible(true);
         captureFaceView.setResultCallback((croppedBase64, silentScore, originBase64) -> {
             try {
                 CaptureFaceResultManager.INSTANCE.sendResult(
@@ -170,7 +171,7 @@ public class CaptureFaceActivity extends AbsBaseActivity {
         performanceMode = intent.getIntExtra(PERFORMANCE_MODE, performanceMode);
         needLivenessCheck = intent.getBooleanExtra(NEED_LIVENESS_CHECK, needLivenessCheck);
         cameraId = intent.getIntExtra(CAMERA_ID, cameraId);
-        linearZoom = intent.getFloatExtra(LINEAR_ZOOM, linearZoom);
+        linearZoom = intent.getFloatExtra(LINEAR_ZOOM, linearZoom); //不要传太大。默认0.01
         rotationDegrees = intent.getIntExtra(ROTATION_DEGREES, rotationDegrees);
     }
 
