@@ -1,3 +1,8 @@
+## 2026.09.08（2026-09-08）
+
+- 修复传统 uni-app 云打包时误编译标准模式组件桥接代码，导致 `UniNativeViewElement`、`getAndroidActivity` 和 `bindAndroidView` 无法解析的问题。
+- 将全屏抓拍 Activity 主题补充到插件自身资源中，修复 `Theme.FaceAISDK.Fullscreen` 资源链接失败。
+
 ## 2026.09.07（2026-09-07）
 优化细节，抓拍防抖
 ## 2026.09.05（2026-09-05）

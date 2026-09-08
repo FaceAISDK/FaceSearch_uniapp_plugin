@@ -1,0 +1,1535 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="第三方传统 uni-app 项目集成 FaceAI Search 抓拍兼容模式组件的完整方法、代码与排障指引。">
+  <meta name="color-scheme" content="light">
+  <title>传统 uni-app 接入抓拍兼容模式组件｜FaceAI Search</title>
+  <style>
+    :root {
+      --ink: #172234;
+      --muted: #5f6b7b;
+      --line: #dce3ea;
+      --line-strong: #c8d2dc;
+      --paper: #ffffff;
+      --canvas: #f4f7f9;
+      --navy: #10243d;
+      --navy-2: #193855;
+      --cyan: #16a5a3;
+      --cyan-soft: #e8f7f5;
+      --green: #16835d;
+      --green-soft: #e9f7f0;
+      --amber: #9a6111;
+      --amber-soft: #fff5df;
+      --red: #b64040;
+      --red-soft: #fff0f0;
+      --code-bg: #101a29;
+      --code-ink: #d8e5f3;
+      --shadow: 0 18px 46px rgba(20, 36, 55, 0.09);
+      --radius: 16px;
+      --content: 1180px;
+    }
+
+    * { box-sizing: border-box; }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 28px;
+    }
+
+    body {
+      margin: 0;
+      background:
+        linear-gradient(180deg, #eef4f6 0, var(--canvas) 420px, var(--canvas) 100%);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 16px;
+      line-height: 1.75;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a {
+      color: #087f86;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 3px;
+    }
+
+    a:hover { color: #055b60; }
+
+    button, a { -webkit-tap-highlight-color: transparent; }
+
+    .topbar {
+      color: #fff;
+      background: var(--navy);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .topbar-inner {
+      width: min(var(--content), calc(100% - 40px));
+      min-height: 68px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 760;
+      letter-spacing: 0.01em;
+    }
+
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      color: #083a3b;
+      background: #56d6ce;
+      border-radius: 10px;
+      font-size: 18px;
+      font-weight: 900;
+    }
+
+    .top-meta {
+      color: #c9d8e6;
+      font-size: 14px;
+      text-align: right;
+    }
+
+    .hero {
+      color: #fff;
+      background:
+        radial-gradient(circle at 85% 25%, rgba(57, 211, 198, 0.20), transparent 28%),
+        linear-gradient(135deg, var(--navy) 0%, #14324f 68%, #0c4d52 100%);
+      padding: 68px 0 74px;
+    }
+
+    .hero-inner {
+      width: min(var(--content), calc(100% - 40px));
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.75fr);
+      gap: 48px;
+      align-items: end;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      color: #7fe0d8;
+      font-size: 14px;
+      font-weight: 760;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 26px;
+      height: 2px;
+      background: currentColor;
+    }
+
+    h1 {
+      max-width: 860px;
+      margin: 0;
+      font-size: clamp(34px, 5.4vw, 62px);
+      line-height: 1.12;
+      letter-spacing: -0.045em;
+    }
+
+    .hero-lead {
+      max-width: 760px;
+      margin: 22px 0 0;
+      color: #d2dfeb;
+      font-size: 18px;
+      line-height: 1.8;
+    }
+
+    .verdict {
+      padding: 24px;
+      background: rgba(5, 18, 32, 0.46);
+      border: 1px solid rgba(149, 227, 217, 0.24);
+      border-radius: 18px;
+      backdrop-filter: blur(8px);
+    }
+
+    .verdict-label {
+      color: #85e5dc;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+    }
+
+    .verdict strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 22px;
+      line-height: 1.45;
+    }
+
+    .verdict p {
+      margin: 10px 0 0;
+      color: #c3d5e4;
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .shell {
+      width: min(var(--content), calc(100% - 40px));
+      margin: -34px auto 80px;
+      display: grid;
+      grid-template-columns: 238px minmax(0, 1fr);
+      gap: 28px;
+      align-items: start;
+      position: relative;
+      z-index: 1;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 24px;
+      padding: 20px 16px;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .sidebar-title {
+      margin: 0 10px 10px;
+      color: #718093;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+    }
+
+    .nav-link {
+      display: block;
+      margin: 3px 0;
+      padding: 8px 10px;
+      color: #4d5b6b;
+      border-left: 3px solid transparent;
+      border-radius: 8px;
+      font-size: 14px;
+      text-decoration: none;
+      transition: 150ms ease;
+    }
+
+    .nav-link:hover,
+    .nav-link.active {
+      color: #096b70;
+      background: var(--cyan-soft);
+      border-left-color: var(--cyan);
+    }
+
+    main {
+      min-width: 0;
+      display: grid;
+      gap: 22px;
+    }
+
+    .section {
+      padding: 34px clamp(22px, 4vw, 46px);
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: 0 8px 28px rgba(22, 37, 52, 0.045);
+    }
+
+    .section-kicker {
+      margin-bottom: 7px;
+      color: var(--cyan);
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    h2 {
+      margin: 0 0 18px;
+      font-size: clamp(25px, 3vw, 34px);
+      line-height: 1.3;
+      letter-spacing: -0.025em;
+    }
+
+    h3 {
+      margin: 30px 0 12px;
+      font-size: 20px;
+      line-height: 1.45;
+    }
+
+    p { margin: 12px 0; }
+
+    .muted { color: var(--muted); }
+
+    .status-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin: 24px 0 4px;
+    }
+
+    .status-chip {
+      padding: 15px;
+      background: #f7fafb;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+    }
+
+    .status-chip span {
+      display: block;
+      color: #758191;
+      font-size: 12px;
+    }
+
+    .status-chip strong {
+      display: block;
+      margin-top: 3px;
+      font-size: 15px;
+    }
+
+    .callout {
+      margin: 22px 0;
+      padding: 18px 20px;
+      border-left: 4px solid var(--cyan);
+      background: var(--cyan-soft);
+      border-radius: 0 12px 12px 0;
+    }
+
+    .callout strong { color: #09666a; }
+
+    .callout.warning {
+      border-left-color: #d08a21;
+      background: var(--amber-soft);
+    }
+
+    .callout.warning strong { color: #82500b; }
+
+    .callout.danger {
+      border-left-color: var(--red);
+      background: var(--red-soft);
+    }
+
+    .callout.danger strong { color: #963434; }
+
+    .path {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 8px;
+      margin: 26px 0 10px;
+      counter-reset: path-step;
+    }
+
+    .path-item {
+      position: relative;
+      min-height: 112px;
+      padding: 17px 13px 14px;
+      background: #f7fafb;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      counter-increment: path-step;
+    }
+
+    .path-item::before {
+      content: counter(path-step, decimal-leading-zero);
+      display: block;
+      color: var(--cyan);
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+    }
+
+    .path-item strong {
+      display: block;
+      margin-top: 6px;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .flow {
+      display: flex;
+      align-items: stretch;
+      gap: 8px;
+      margin: 24px 0 12px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+    }
+
+    .flow-node {
+      flex: 1 0 126px;
+      min-width: 126px;
+      padding: 15px 12px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      background: #f7fafb;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.5;
+    }
+
+    .flow-arrow {
+      align-self: center;
+      color: var(--cyan);
+      font-size: 21px;
+      font-weight: 800;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 46px minmax(0, 1fr);
+      gap: 18px;
+      padding: 28px 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .step:first-of-type { margin-top: 8px; }
+
+    .step-number {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      background: var(--navy-2);
+      border-radius: 13px;
+      font-weight: 850;
+    }
+
+    .step-body h3 { margin: 3px 0 8px; }
+
+    ul, ol { padding-left: 1.3em; }
+
+    li { margin: 7px 0; }
+
+    .checklist {
+      list-style: none;
+      padding: 0;
+    }
+
+    .checklist li {
+      position: relative;
+      padding-left: 30px;
+    }
+
+    .checklist li::before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      top: 1px;
+      width: 20px;
+      height: 20px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      background: var(--green);
+      border-radius: 50%;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .code-wrap {
+      position: relative;
+      margin: 16px 0 22px;
+      overflow: hidden;
+      border: 1px solid #26384d;
+      border-radius: 13px;
+      background: var(--code-bg);
+    }
+
+    .code-head {
+      min-height: 42px;
+      padding: 8px 10px 8px 15px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      color: #8fa7c0;
+      background: #0d1623;
+      border-bottom: 1px solid #233449;
+      font-size: 12px;
+      letter-spacing: 0.04em;
+    }
+
+    .copy-button {
+      appearance: none;
+      padding: 6px 10px;
+      color: #cce4e6;
+      background: #173646;
+      border: 1px solid #285468;
+      border-radius: 7px;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .copy-button:hover,
+    .copy-button:focus-visible {
+      color: #fff;
+      background: #205069;
+      outline: 2px solid #4bc7c3;
+      outline-offset: 2px;
+    }
+
+    pre {
+      margin: 0;
+      padding: 20px;
+      overflow: auto;
+      color: var(--code-ink);
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 13px;
+      line-height: 1.65;
+      tab-size: 2;
+      white-space: pre;
+    }
+
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    }
+
+    :not(pre) > code {
+      padding: 0.12em 0.36em;
+      color: #075f65;
+      background: #edf6f6;
+      border-radius: 5px;
+      font-size: 0.92em;
+    }
+
+    .token-comment { color: #8095aa; }
+    .token-key { color: #7dd3fc; }
+    .token-string { color: #a7e3bf; }
+    .token-value { color: #f4ca7e; }
+
+    .table-scroll {
+      width: 100%;
+      overflow-x: auto;
+      margin: 18px 0;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+    }
+
+    table {
+      width: 100%;
+      min-width: 650px;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th, td {
+      padding: 13px 15px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      color: #34465a;
+      background: #f4f8f9;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    tr:last-child td { border-bottom: 0; }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      color: #0c6d50;
+      background: var(--green-soft);
+      border: 1px solid #bee6d3;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 750;
+      white-space: nowrap;
+    }
+
+    .badge.warn {
+      color: #82500b;
+      background: var(--amber-soft);
+      border-color: #efdaa9;
+    }
+
+    .faq {
+      display: grid;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    details {
+      padding: 0 18px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fbfcfd;
+    }
+
+    summary {
+      padding: 15px 0;
+      cursor: pointer;
+      font-weight: 760;
+    }
+
+    details[open] summary { border-bottom: 1px solid var(--line); }
+
+    details > div { padding: 5px 0 14px; }
+
+    .source-list {
+      display: grid;
+      gap: 10px;
+      padding: 0;
+      list-style: none;
+    }
+
+    .source-list li {
+      padding: 14px 16px;
+      background: #f7fafb;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+    }
+
+    .footer {
+      width: min(var(--content), calc(100% - 40px));
+      margin: -52px auto 32px;
+      color: #738092;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .mobile-jump { display: none; }
+
+    @media (max-width: 960px) {
+      .hero-inner { grid-template-columns: 1fr; gap: 28px; }
+      .shell { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .mobile-jump {
+        display: block;
+        margin: -12px 0 0;
+      }
+      .mobile-jump select {
+        width: 100%;
+        min-height: 46px;
+        padding: 0 14px;
+        color: var(--ink);
+        background: #fff;
+        border: 1px solid var(--line-strong);
+        border-radius: 10px;
+        font: inherit;
+      }
+      .path { grid-template-columns: repeat(3, 1fr); }
+      .status-row { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 620px) {
+      .topbar-inner,
+      .hero-inner,
+      .shell,
+      .footer { width: min(100% - 24px, var(--content)); }
+      .topbar-inner { min-height: 60px; }
+      .top-meta { display: none; }
+      .hero { padding: 48px 0 62px; }
+      .hero-lead { font-size: 16px; }
+      .section { padding: 26px 18px; }
+      .path { grid-template-columns: repeat(2, 1fr); }
+      .status-row { grid-template-columns: 1fr; }
+      .step { grid-template-columns: 38px minmax(0, 1fr); gap: 12px; }
+      .step-number { width: 36px; height: 36px; border-radius: 10px; }
+      pre { padding: 16px; font-size: 12px; }
+    }
+
+    @media print {
+      body { background: #fff; }
+      .topbar, .sidebar, .mobile-jump, .copy-button { display: none !important; }
+      .hero { color: var(--ink); background: #fff; padding: 20px 0; border-bottom: 2px solid var(--ink); }
+      .hero-lead, .verdict p { color: var(--muted); }
+      .hero-inner { width: 100%; grid-template-columns: 1fr; }
+      .verdict { color: var(--ink); background: #f4f7f9; border-color: var(--line); }
+      .verdict-label { color: var(--green); }
+      .shell { width: 100%; margin: 20px 0; display: block; }
+      .section { box-shadow: none; break-inside: avoid; margin-bottom: 18px; }
+      .footer { width: 100%; margin: 20px 0; }
+      a { color: inherit; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">F</span>
+        <span>FaceAI Search · 集成指引</span>
+      </div>
+      <div class="top-meta">传统 uni-app · App-Android · 抓拍兼容模式</div>
+    </div>
+  </header>
+
+  <section class="hero" aria-labelledby="page-title">
+    <div class="hero-inner">
+      <div>
+        <div class="eyebrow">Integration Guide</div>
+        <h1 id="page-title">第三方传统 uni-app<br>接入抓拍兼容模式组件</h1>
+        <p class="hero-lead">
+          面向已有 Vue2 / Vue3 uni-app 工程的可复制接入说明。内容覆盖插件放置、
+          <code>.nvue</code> 宿主页、相机权限、组件事件、再次抓拍、切换相机和自定义基座。
+        </p>
+      </div>
+      <aside class="verdict" aria-label="接入结论">
+        <span class="verdict-label">先看结论</span>
+        <strong>普通 <code>.vue</code> 页面不能直接内嵌该原生组件。</strong>
+        <p>请让业务页通过 <code>uni.navigateTo</code> 跳转到独立 <code>.nvue</code> 页面，并在该页面使用 <code>&lt;face-ai-capture-compat&gt;</code>。</p>
+      </aside>
+    </div>
+  </section>
+
+  <div class="shell">
+    <nav class="sidebar" aria-label="文档目录">
+      <div class="sidebar-title">CONTENTS</div>
+      <a class="nav-link active" href="#overview">接入总览</a>
+      <a class="nav-link" href="#prerequisites">前置条件</a>
+      <a class="nav-link" href="#steps">接入步骤</a>
+      <a class="nav-link" href="#sample">完整 nvue 示例</a>
+      <a class="nav-link" href="#api">组件 API</a>
+      <a class="nav-link" href="#lifecycle">运行时流程</a>
+      <a class="nav-link" href="#troubleshooting">常见问题</a>
+      <a class="nav-link" href="#checklist">验收清单</a>
+      <a class="nav-link" href="#references">参考资料</a>
+    </nav>
+
+    <main>
+      <div class="mobile-jump">
+        <label for="section-jump" class="sr-only">跳转到章节</label>
+        <select id="section-jump" aria-label="跳转到章节">
+          <option value="#overview">接入总览</option>
+          <option value="#prerequisites">前置条件</option>
+          <option value="#steps">接入步骤</option>
+          <option value="#sample">完整 nvue 示例</option>
+          <option value="#api">组件 API</option>
+          <option value="#lifecycle">运行时流程</option>
+          <option value="#troubleshooting">常见问题</option>
+          <option value="#checklist">验收清单</option>
+          <option value="#references">参考资料</option>
+        </select>
+      </div>
+
+      <section class="section" id="overview">
+        <div class="section-kicker">01 · Overview</div>
+        <h2>接入总览</h2>
+        <p>
+          <strong>抓拍兼容模式组件</strong>是 Android 原生 View。传统 uni-app 的普通
+          <code>.vue</code> 页面由 WebView 渲染，无法直接承载它；App 端的
+          <code>.nvue</code> 页面使用原生渲染，可以正常内嵌。
+        </p>
+
+        <div class="status-row" aria-label="适用范围">
+          <div class="status-chip"><span>项目类型</span><strong>传统 uni-app</strong></div>
+          <div class="status-chip"><span>页面类型</span><strong>App 端 .nvue</strong></div>
+          <div class="status-chip"><span>平台</span><strong>Android</strong></div>
+          <div class="status-chip"><span>组件标签</span><strong>face-ai-capture-compat</strong></div>
+        </div>
+
+        <div class="path" aria-label="六步接入路径">
+          <div class="path-item"><strong>复制插件目录</strong></div>
+          <div class="path-item"><strong>配置 Android</strong></div>
+          <div class="path-item"><strong>注册 nvue 路由</strong></div>
+          <div class="path-item"><strong>编写抓拍页</strong></div>
+          <div class="path-item"><strong>业务页跳转</strong></div>
+          <div class="path-item"><strong>自定义基座运行</strong></div>
+        </div>
+
+        <div class="flow" aria-label="页面调用关系">
+          <div class="flow-node">业务页面<br><code>.vue</code></div>
+          <div class="flow-arrow" aria-hidden="true">→</div>
+          <div class="flow-node"><code>navigateTo</code><br>页面跳转</div>
+          <div class="flow-arrow" aria-hidden="true">→</div>
+          <div class="flow-node">抓拍页面<br><code>.nvue</code></div>
+          <div class="flow-arrow" aria-hidden="true">→</div>
+          <div class="flow-node">兼容组件<br>Android 原生 View</div>
+        </div>
+
+        <div class="callout warning">
+          <strong>不要把 Demo 的 <code>.uvue</code> 页面原样复制到传统 uni-app。</strong>
+          Demo 工程是 uni-app x 写法；第三方传统 uni-app 工程应使用本指南中的
+          <code>.nvue + &lt;script&gt;</code> 选项式写法。
+        </div>
+      </section>
+
+      <section class="section" id="prerequisites">
+        <div class="section-kicker">02 · Prerequisites</div>
+        <h2>前置条件</h2>
+        <ul class="checklist">
+          <li>目标项目是传统 uni-app（Vue2 或 Vue3），运行目标为 App-Android。</li>
+          <li>使用 HBuilderX 4.31 或更高版本；插件元数据声明传统 uni-app 编译器版本为 4.52 或更高。</li>
+          <li>当前插件版本为 <code>2026.09.08</code>。</li>
+          <li>当前 <code>utssdk/app-android/config.json</code> 实际设置 <code>minSdkVersion: 23</code>，因此按 Android 6.0+ 准备。</li>
+          <li>设备或模拟器使用 <code>arm64-v8a</code> / <code>armeabi-v7a</code>；如用模拟器，优先选 ARM 镜像。</li>
+          <li>必须制作自定义调试基座；标准基座不包含插件的第三方 SDK、CameraX 依赖和原生资源。</li>
+        </ul>
+
+        <div class="callout">
+          <strong>组件无需手动 import 或 components 注册。</strong>
+          兼容模式 UTS 组件会全局注册，页面里直接使用组件标签即可。
+        </div>
+      </section>
+
+      <section class="section" id="steps">
+        <div class="section-kicker">03 · Integration</div>
+        <h2>接入步骤</h2>
+
+        <article class="step">
+          <div class="step-number">1</div>
+          <div class="step-body">
+            <h3>把完整插件复制到目标工程</h3>
+            <p>将本仓库的整个 <code>uni_modules/FaceAI-Search</code> 目录复制到第三方项目的 <code>uni_modules</code> 下，不要只复制组件入口文件。</p>
+            <div class="code-wrap">
+              <div class="code-head"><span>目标工程目录</span><button class="copy-button" type="button">复制</button></div>
+              <pre><code>your-uniapp-project/
+├─ pages/
+├─ uni_modules/
+│  └─ FaceAI-Search/
+│     ├─ package.json
+│     ├─ components/
+│     └─ utssdk/
+│        └─ app-android/
+│           ├─ index.vue              # 抓拍兼容模式组件入口
+│           ├─ CaptureFaceNativeView.kt
+│           ├─ config.json
+│           ├─ AndroidManifest.xml
+│           └─ ...
+├─ manifest.json
+└─ pages.json</code></pre>
+            </div>
+            <p class="muted">插件的依赖、原生源码、Manifest、资源和 AAR 必须一起参与基座打包。</p>
+          </div>
+        </article>
+
+        <article class="step">
+          <div class="step-number">2</div>
+          <div class="step-body">
+            <h3>检查传统 uni-app 的 Android 配置</h3>
+            <p>推荐在 HBuilderX 的 <strong>manifest.json 可视化界面</strong>中设置最低 Android 版本和 CPU 类型。若使用源码视图，传统 uni-app 的配置位于 <code>app-plus.distribute.android</code>。</p>
+            <div class="code-wrap">
+              <div class="code-head"><span>manifest.json · 合并到现有配置，不要整段覆盖</span><button class="copy-button" type="button">复制</button></div>
+              <pre><code>{
+  <span class="token-key">"app-plus"</span>: {
+    <span class="token-key">"distribute"</span>: {
+      <span class="token-key">"android"</span>: {
+        <span class="token-key">"minSdkVersion"</span>: <span class="token-value">23</span>,
+        <span class="token-key">"abiFilters"</span>: [
+          <span class="token-string">"armeabi-v7a"</span>,
+          <span class="token-string">"arm64-v8a"</span>
+        ],
+        <span class="token-key">"permissions"</span>: [
+          <span class="token-string">"&lt;uses-permission android:name=\"android.permission.CAMERA\"/&gt;"</span>
+        ]
+      }
+    }
+  }
+}</code></pre>
+            </div>
+            <div class="callout">
+              插件自己的 <code>AndroidManifest.xml</code> 已声明相机权限，打包时会合并。目标工程中再次显式声明，便于第三方团队审查和维护；如果现有配置已包含该权限，不需要重复添加。
+            </div>
+          </div>
+        </article>
+
+        <article class="step">
+          <div class="step-number">3</div>
+          <div class="step-body">
+            <h3>新增并注册 <code>.nvue</code> 抓拍页面</h3>
+            <p>新建 <code>pages/face-capture/face-capture.nvue</code>，然后在 <code>pages.json</code> 注册路由。路由不写文件扩展名。</p>
+            <div class="code-wrap">
+              <div class="code-head"><span>pages.json · pages 数组新增一项</span><button class="copy-button" type="button">复制</button></div>
+              <pre><code>{
+  <span class="token-key">"path"</span>: <span class="token-string">"pages/face-capture/face-capture"</span>,
+  <span class="token-key">"style"</span>: {
+    <span class="token-key">"navigationBarTitleText"</span>: <span class="token-string">"人脸抓拍"</span>,
+    <span class="token-key">"navigationBarBackgroundColor"</span>: <span class="token-string">"#10243d"</span>,
+    <span class="token-key">"navigationBarTextStyle"</span>: <span class="token-string">"white"</span>
+  }
+}</code></pre>
+            </div>
+            <div class="callout warning">
+              如果同一路径同时存在 <code>face-capture.vue</code> 和 <code>face-capture.nvue</code>，App 端会优先使用 <code>.nvue</code>；为减少维护歧义，建议抓拍页只保留 <code>.nvue</code>。
+            </div>
+          </div>
+        </article>
+
+        <article class="step">
+          <div class="step-number">4</div>
+          <div class="step-body">
+            <h3>在 <code>.nvue</code> 页面放置组件</h3>
+            <p>组件必须设置明确宽高，否则原生 View 可能不显示。最小可运行结构如下；生产项目建议直接使用下一章的完整示例。</p>
+            <div class="code-wrap">
+              <div class="code-head"><span>pages/face-capture/face-capture.nvue · 最小结构</span><button class="copy-button" type="button">复制</button></div>
+              <pre><code>&lt;template&gt;
+  &lt;view class="page"&gt;
+    &lt;face-ai-capture-compat
+      ref="captureCompat"
+      :performanceMode="1"
+      :needLivenessCheck="true"
+      :cameraId="0"
+      :linearZoom="0.12"
+      :rotationDegrees="-1"
+      :showFaceCover="false"
+      :autoStart="true"
+      style="width: 750rpx; height: 900rpx; background-color: #000000;"
+      @ready="onCaptureReady"
+      @result="onCaptureResult"
+      @tips="onCaptureTips"
+      @error="onCaptureError"
+      @camera-change="onCameraChange"
+    /&gt;
+  &lt;/view&gt;
+&lt;/template&gt;
+
+&lt;script&gt;
+export default {
+  methods: {
+    onCaptureReady() {},
+    onCaptureResult(payload) { console.log(payload) },
+    onCaptureTips(payload) { console.log(payload) },
+    onCaptureError(payload) { console.error(payload) },
+    onCameraChange(payload) { console.log(payload) }
+  }
+}
+&lt;/script&gt;</code></pre>
+            </div>
+          </div>
+        </article>
+
+        <article class="step">
+          <div class="step-number">5</div>
+          <div class="step-body">
+            <h3>从业务 <code>.vue</code> 页面跳转</h3>
+            <p>普通业务页只负责路由，不直接放置原生组件。</p>
+            <div class="code-wrap">
+              <div class="code-head"><span>任意业务页面</span><button class="copy-button" type="button">复制</button></div>
+              <pre><code>&lt;button @click="openFaceCapture"&gt;开始人脸抓拍&lt;/button&gt;
+
+&lt;script&gt;
+export default {
+  methods: {
+    openFaceCapture() {
+      uni.navigateTo({
+        url: '/pages/face-capture/face-capture'
+      })
+    }
+  }
+}
+&lt;/script&gt;</code></pre>
+            </div>
+            <p class="muted">抓拍结果如需回传业务页，可按现有项目约定使用 eventChannel、Pinia/Vuex 或页面事件；不要把大段 Base64 长期存进全局响应式状态。</p>
+          </div>
+        </article>
+
+        <article class="step">
+          <div class="step-number">6</div>
+          <div class="step-body">
+            <h3>制作并使用自定义调试基座</h3>
+            <ol>
+              <li>HBuilderX 顶部选择：<strong>运行 → 运行到手机或模拟器 → 制作自定义调试基座</strong>。</li>
+              <li>选择 Android，确认应用信息并提交云端打包。</li>
+              <li>完成后选择：<strong>运行 → 运行到手机或模拟器 → 运行到 Android App 基座</strong>。</li>
+              <li>在运行窗口明确选择<strong>使用自定义基座运行</strong>，再选择设备。</li>
+            </ol>
+            <div class="callout danger">
+              <strong>仅“制作过”还不够。</strong>每次运行时仍要选中自定义基座；误用标准基座时，常见表现是插件不存在、原生依赖缺失或组件空白。
+            </div>
+            <p>更新插件版本、CameraX/第三方 SDK、原生资源、<code>AndroidManifest.xml</code> 或 <code>config.json</code> 后，需要重新制作基座。只改页面样式和普通 JS 逻辑，通常无需重做。</p>
+          </div>
+        </article>
+      </section>
+
+      <section class="section" id="sample">
+        <div class="section-kicker">04 · Copy-ready Sample</div>
+        <h2>完整 <code>.nvue</code> 示例</h2>
+        <p>下面示例包含运行时相机权限、授权拒绝后的设置入口、结果展示、再次抓拍和前后摄像头切换，可直接作为第三方项目的起点。</p>
+
+        <div class="code-wrap">
+          <div class="code-head"><span>pages/face-capture/face-capture.nvue</span><button class="copy-button" type="button">复制</button></div>
+          <pre><code>&lt;template&gt;
+  &lt;view class="page"&gt;
+    &lt;view v-if="cameraGranted" class="capture-page"&gt;
+      &lt;face-ai-capture-compat
+        ref="captureCompat"
+        :performanceMode="1"
+        :needLivenessCheck="true"
+        :cameraId="0"
+        :linearZoom="0.12"
+        :rotationDegrees="-1"
+        :showFaceCover="false"
+        :autoStart="true"
+        style="width: 750rpx; height: 850rpx; background-color: #000000;"
+        @ready="onCaptureReady"
+        @result="onCaptureResult"
+        @tips="onCaptureTips"
+        @error="onCaptureError"
+        @camera-change="onCameraChange"
+      /&gt;
+
+      &lt;text class="status"&gt;{{ statusText }}&lt;/text&gt;
+      &lt;text class="status"&gt;抓拍次数：{{ captureCount }}&lt;/text&gt;
+      &lt;text class="status"&gt;静默活体分数：{{ silentScore }}&lt;/text&gt;
+
+      &lt;view class="image-row"&gt;
+        &lt;image class="result-image" mode="aspectFit" :src="croppedImageSrc" /&gt;
+        &lt;image class="result-image image-last" mode="aspectFit" :src="originImageSrc" /&gt;
+      &lt;/view&gt;
+
+      &lt;view class="button-row"&gt;
+        &lt;button class="button primary" :disabled="!ready || capturing" @tap="retryCapture"&gt;
+          {{ capturing ? '抓拍中…' : '再次抓拍' }}
+        &lt;/button&gt;
+        &lt;button class="button secondary" :disabled="!ready" @tap="toggleCamera"&gt;
+          切换相机
+        &lt;/button&gt;
+      &lt;/view&gt;
+    &lt;/view&gt;
+
+    &lt;view v-else class="permission-page"&gt;
+      &lt;text class="permission-title"&gt;需要相机权限&lt;/text&gt;
+      &lt;text class="permission-text"&gt;相机仅用于本地人脸抓拍，请先授权。&lt;/text&gt;
+      &lt;button class="button primary permission-button" :disabled="permissionRequesting" @tap="requestCameraPermission"&gt;
+        {{ permissionRequesting ? '正在申请…' : '授权相机' }}
+      &lt;/button&gt;
+      &lt;button v-if="permissionPermanentlyDenied" class="button secondary permission-button" @tap="openPermissionSettings"&gt;
+        打开系统设置
+      &lt;/button&gt;
+      &lt;text class="permission-text"&gt;{{ statusText }}&lt;/text&gt;
+    &lt;/view&gt;
+  &lt;/view&gt;
+&lt;/template&gt;
+
+&lt;script&gt;
+const CAMERA_PERMISSION = 'android.permission.CAMERA'
+
+export default {
+  data() {
+    return {
+      pageReady: false,
+      cameraGranted: false,
+      permissionRequesting: false,
+      permissionPermanentlyDenied: false,
+      ready: false,
+      capturing: false,
+      captureCount: 0,
+      silentScore: 0,
+      currentCameraId: 0,
+      croppedImageSrc: '',
+      originImageSrc: '',
+      statusText: '正在检查相机权限…'
+    }
+  },
+
+  onReady() {
+    this.pageReady = true
+    this.requestCameraPermission()
+  },
+
+  onShow() {
+    // 从系统设置返回时重新检查；首次 onShow 发生在 onReady 前，需跳过。
+    if (this.pageReady &amp;&amp; !this.cameraGranted &amp;&amp; !this.permissionRequesting) {
+      this.requestCameraPermission()
+    }
+  },
+
+  onUnload() {
+    const capture = this.$refs.captureCompat
+    if (capture) capture.stop()
+  },
+
+  methods: {
+    requestCameraPermission() {
+      if (this.permissionRequesting) return
+      this.permissionRequesting = true
+      this.statusText = '等待相机权限授权结果…'
+
+      plus.android.requestPermissions(
+        [CAMERA_PERMISSION],
+        (result) =&gt; {
+          this.permissionRequesting = false
+          const deniedPresent = result.deniedPresent || []
+          const deniedAlways = result.deniedAlways || []
+
+          if (deniedPresent.length === 0 &amp;&amp; deniedAlways.length === 0) {
+            this.cameraGranted = true
+            this.permissionPermanentlyDenied = false
+            this.statusText = '权限已授予，正在加载相机…'
+            return
+          }
+
+          this.cameraGranted = false
+          this.permissionPermanentlyDenied = deniedAlways.length &gt; 0
+          this.statusText = this.permissionPermanentlyDenied
+            ? '相机权限已被永久拒绝，请到系统设置中开启'
+            : '相机权限未授予，可再次申请'
+        },
+        (error) =&gt; {
+          this.permissionRequesting = false
+          this.cameraGranted = false
+          this.statusText = '权限申请失败：' + (error.message || error.code || '未知错误')
+        }
+      )
+    },
+
+    openPermissionSettings() {
+      uni.openAppAuthorizeSetting()
+    },
+
+    // 同时兼容 JS 对象、event.detail 和 Map 形态的事件参数。
+    readField(payload, key) {
+      const source = payload &amp;&amp; payload.detail ? payload.detail : payload
+      if (!source) return undefined
+      if (typeof source.get === 'function') return source.get(key)
+      return source[key]
+    },
+
+    toImageSource(base64) {
+      if (!base64 || base64.indexOf('data:image/') === 0) return base64 || ''
+      return 'data:image/jpeg;base64,' + base64
+    },
+
+    onCaptureReady() {
+      this.ready = true
+      this.capturing = true
+      this.statusText = '抓拍组件已启动，请将人脸置于取景区域'
+    },
+
+    onCaptureResult(payload) {
+      const croppedBase64 = this.readField(payload, 'croppedBase64') || ''
+      const originBase64 = this.readField(payload, 'originBase64') || ''
+
+      this.captureCount += 1
+      this.silentScore = Number(this.readField(payload, 'silentScore') || 0)
+      this.croppedImageSrc = this.toImageSource(croppedBase64)
+      this.originImageSrc = this.toImageSource(originBase64)
+      this.capturing = false
+      this.statusText = '本轮完成；需要继续时点击“再次抓拍”'
+    },
+
+    onCaptureTips(payload) {
+      const code = this.readField(payload, 'code')
+      const message = this.readField(payload, 'message') || ''
+      this.statusText = '提示 ' + code + '：' + message
+    },
+
+    onCaptureError(payload) {
+      const code = this.readField(payload, 'code') || 'UNKNOWN'
+      const message = this.readField(payload, 'message') || ''
+      this.statusText = '错误 ' + code + '：' + message
+      this.capturing = false
+
+      if (code === 'CAMERA_PERMISSION_REQUIRED') {
+        this.cameraGranted = false
+      }
+    },
+
+    onCameraChange(payload) {
+      this.currentCameraId = Number(this.readField(payload, 'cameraId') || 0)
+      this.statusText = this.currentCameraId === 0 ? '已切换到前置相机' : '已切换到后置相机'
+    },
+
+    retryCapture() {
+      const capture = this.$refs.captureCompat
+      if (!capture || !this.ready || this.capturing) return
+      capture.retry()
+      this.capturing = true
+      this.statusText = '正在等待下一次抓拍…'
+    },
+
+    toggleCamera() {
+      const capture = this.$refs.captureCompat
+      if (!capture || !this.ready) return
+      capture.toggleCamera()
+      this.statusText = '正在切换相机…'
+    }
+  }
+}
+&lt;/script&gt;
+
+&lt;style&gt;
+.page {
+  flex: 1;
+  background-color: #10243d;
+}
+.capture-page {
+  flex: 1;
+  align-items: center;
+}
+.status {
+  width: 690rpx;
+  margin-top: 12rpx;
+  color: #ffffff;
+  font-size: 28rpx;
+}
+.image-row {
+  width: 690rpx;
+  flex-direction: row;
+  margin-top: 18rpx;
+}
+.result-image {
+  width: 330rpx;
+  height: 240rpx;
+  background-color: #091624;
+}
+.image-last {
+  margin-left: 30rpx;
+}
+.button-row {
+  width: 690rpx;
+  flex-direction: row;
+  margin-top: 20rpx;
+  margin-bottom: 24rpx;
+}
+.button {
+  flex: 1;
+  height: 82rpx;
+  color: #ffffff;
+  font-size: 28rpx;
+}
+.primary {
+  background-color: #16835d;
+}
+.secondary {
+  margin-left: 16rpx;
+  background-color: #365069;
+}
+.permission-page {
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  padding-left: 40rpx;
+  padding-right: 40rpx;
+}
+.permission-title {
+  color: #ffffff;
+  font-size: 36rpx;
+  font-weight: bold;
+}
+.permission-text {
+  margin-top: 20rpx;
+  color: #c9d8e6;
+  font-size: 28rpx;
+  text-align: center;
+}
+.permission-button {
+  width: 560rpx;
+  flex: none;
+  margin-top: 28rpx;
+}
+&lt;/style&gt;</code></pre>
+        </div>
+
+        <div class="callout warning">
+          示例中的 <code>850rpx</code> 只是明确尺寸的起点。若页面还包含业务工具栏，请根据
+          <code>windowHeight</code> 计算预览高度，但始终保证组件最终得到非零宽高。
+        </div>
+      </section>
+
+      <section class="section" id="api">
+        <div class="section-kicker">05 · Component API</div>
+        <h2>组件属性、事件与方法</h2>
+
+        <h3>属性</h3>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>属性</th><th>类型 / 默认值</th><th>说明</th><th>建议</th></tr></thead>
+            <tbody>
+              <tr><td><code>performanceMode</code></td><td>Number / <code>1</code></td><td><code>-1</code> 无限制、<code>0</code> 简单、<code>1</code> 快速、<code>2</code> 精确。</td><td><span class="badge">默认 1</span></td></tr>
+              <tr><td><code>needLivenessCheck</code></td><td>Boolean / <code>true</code></td><td>是否计算静默活体分数。</td><td>身份场景建议开启</td></tr>
+              <tr><td><code>cameraId</code></td><td>Number / <code>0</code></td><td><code>0</code> 前置，<code>1</code> 后置；启动时不存在会尝试降级到可用摄像头。</td><td>自拍默认 0</td></tr>
+              <tr><td><code>linearZoom</code></td><td>Number / <code>0.12</code></td><td>线性变焦，原生层会限制到 <code>0–1</code>。</td><td>先保持默认</td></tr>
+              <tr><td><code>rotationDegrees</code></td><td>Number / <code>-1</code></td><td><code>-1</code> 跟随显示方向；也可固定为 <code>0/90/180/270</code>。</td><td><span class="badge">推荐 -1</span></td></tr>
+              <tr><td><code>showFaceCover</code></td><td>Boolean / <code>false</code></td><td>是否显示原生人脸引导遮罩。</td><td>按 UI 需求</td></tr>
+              <tr><td><code>autoStart</code></td><td>Boolean / <code>true</code></td><td>组件载入后自动调用 <code>start()</code>。</td><td>权限通过后再挂载组件</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>事件</h3>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>事件</th><th>参数</th><th>触发时机</th></tr></thead>
+            <tbody>
+              <tr><td><code>ready</code></td><td>无</td><td>原生 View 已创建，可以调用实例方法。</td></tr>
+              <tr><td><code>result</code></td><td><code>croppedBase64</code>、<code>silentScore</code>、<code>originBase64</code></td><td>完成一轮有效人脸抓拍后触发；组件随后暂停检测。</td></tr>
+              <tr><td><code>tips</code></td><td><code>code</code>、<code>message</code></td><td>人脸过近、过远、偏转、未检测到人脸等过程提示。</td></tr>
+              <tr><td><code>error</code></td><td><code>code</code>、<code>message</code></td><td>权限、相机绑定、预览、帧处理或编码发生异常。</td></tr>
+              <tr><td><code>camera-change</code></td><td><code>cameraId</code></td><td>实际摄像头发生切换，或启动时自动降级到另一摄像头。</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3><code>result</code> 数据</h3>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>字段</th><th>类型</th><th>含义</th></tr></thead>
+            <tbody>
+              <tr><td><code>croppedBase64</code></td><td>String</td><td>检测、矫正并裁剪后的 224×224 人脸 JPEG Base64。</td></tr>
+              <tr><td><code>silentScore</code></td><td>Number</td><td>静默活体分数；关闭活体计算时不应用作判断依据。</td></tr>
+              <tr><td><code>originBase64</code></td><td>String</td><td>本次检测使用的相机原图 JPEG Base64。</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>实例方法</h3>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>方法</th><th>说明</th><th>传统 nvue 用法</th></tr></thead>
+            <tbody>
+              <tr><td><code>start()</code></td><td>按当前属性开始或重启一次抓拍会话。</td><td><code>this.$refs.captureCompat.start()</code></td></tr>
+              <tr><td><code>stop()</code></td><td>停止相机和帧分析。</td><td>页面卸载前可调用</td></tr>
+              <tr><td><code>retry()</code></td><td>一次结果返回后开始下一轮抓拍。</td><td><span class="badge">连续业务必用</span></td></tr>
+              <tr><td><code>switchCamera(id)</code></td><td>切到指定摄像头，<code>0</code> 前置、<code>1</code> 后置。</td><td>监听 <code>camera-change</code></td></tr>
+              <tr><td><code>toggleCamera()</code></td><td>在前后摄像头之间切换。</td><td>处理 <code>CAMERA_SWITCH_FAILED</code></td></tr>
+              <tr><td><code>canSwitchCamera()</code></td><td>原生侧提供同步布尔返回值。</td><td><span class="badge warn">nvue 不应依赖同步返回值</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout warning">
+          受 nvue / Weex 桥接限制，兼容模式组件的同步方法返回值不可靠。因此传统 uni-app 页面不要依赖
+          <code>canSwitchCamera()</code> 的返回值；直接调用切换方法，再以 <code>camera-change</code> 或
+          <code>error</code> 事件确认结果。
+        </div>
+      </section>
+
+      <section class="section" id="lifecycle">
+        <div class="section-kicker">06 · Runtime</div>
+        <h2>运行时流程与状态控制</h2>
+
+        <div class="flow" aria-label="抓拍运行时流程">
+          <div class="flow-node">申请 CAMERA<br>权限</div>
+          <div class="flow-arrow" aria-hidden="true">→</div>
+          <div class="flow-node">挂载组件<br><code>ready</code></div>
+          <div class="flow-arrow" aria-hidden="true">→</div>
+          <div class="flow-node"><code>autoStart</code><br>启动相机</div>
+          <div class="flow-arrow" aria-hidden="true">→</div>
+          <div class="flow-node">过程提示<br><code>tips</code></div>
+          <div class="flow-arrow" aria-hidden="true">→</div>
+          <div class="flow-node">一次结果<br><code>result</code></div>
+          <div class="flow-arrow" aria-hidden="true">→</div>
+          <div class="flow-node"><code>retry()</code><br>下一轮</div>
+        </div>
+
+        <h3>推荐控制原则</h3>
+        <ul>
+          <li>先拿到相机权限，再通过 <code>v-if</code> 挂载组件，避免 <code>autoStart</code> 立即触发权限错误。</li>
+          <li><code>ready</code> 之前不要调用实例方法。</li>
+          <li>每次 <code>result</code> 后原生检测会暂停；业务处理完成后显式调用 <code>retry()</code>。</li>
+          <li>防止连续点击：调用 <code>retry()</code> 后将按钮置为处理中，收到 <code>result</code> 或 <code>error</code> 再恢复。</li>
+          <li>页面卸载时调用 <code>stop()</code>；组件销毁时插件内部还会执行 <code>release()</code>。</li>
+          <li>Base64 体积较大，展示或提交完成后及时清空；不要写入日志、URL 或长期缓存。</li>
+        </ul>
+
+        <h3>常见错误码</h3>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>错误码</th><th>含义 / 处理方向</th></tr></thead>
+            <tbody>
+              <tr><td><code>CAMERA_PERMISSION_REQUIRED</code></td><td>相机权限缺失；隐藏组件并重新申请或引导到系统设置。</td></tr>
+              <tr><td><code>INVALID_CAMERA_ID</code></td><td><code>cameraId</code> 只能是 0 或 1。</td></tr>
+              <tr><td><code>INVALID_ROTATION_DEGREES</code></td><td>仅允许 -1、0、90、180、270。</td></tr>
+              <tr><td><code>CAMERA_NOT_AVAILABLE</code></td><td>设备没有请求的前置/后置摄像头。</td></tr>
+              <tr><td><code>CAMERA_DEPENDENCY_CONFLICT</code></td><td>目标工程中 CameraX 二进制依赖存在版本冲突，检查其他相机插件。</td></tr>
+              <tr><td><code>CAMERA_BIND_FAILED</code></td><td>相机绑定失败；检查权限、生命周期、相机占用和依赖。</td></tr>
+              <tr><td><code>CAMERA_SWITCH_FAILED</code></td><td>切换相机失败；保持当前摄像头并提示用户。</td></tr>
+              <tr><td><code>CAMERA_PREVIEW_NOT_STREAMING</code></td><td>相机已打开但预览未出流；插件会先自动尝试兼容预览模式。</td></tr>
+              <tr><td><code>FRAME_PROCESS_FAILED</code></td><td>相机帧处理异常。</td></tr>
+              <tr><td><code>BITMAP_ENCODE_FAILED</code></td><td>结果图片转 Base64 失败；允许用户重新抓拍。</td></tr>
+              <tr><td><code>CAPTURE_RETRY_FAILED</code></td><td>下一轮抓拍状态重置失败，可停止后重新 <code>start()</code>。</td></tr>
+              <tr><td><code>VIEW_RELEASED</code></td><td>组件已经释放，不应继续调用实例方法。</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section" id="troubleshooting">
+        <div class="section-kicker">07 · Troubleshooting</div>
+        <h2>常见问题排查</h2>
+        <div class="faq">
+          <details open>
+            <summary>页面能打开，但组件完全不显示</summary>
+            <div>
+              <ol>
+                <li>确认文件后缀是 <code>.nvue</code>，不是普通 <code>.vue</code>。</li>
+                <li>确认组件写了明确的 <code>width</code> 和 <code>height</code>。</li>
+                <li>确认插件目录完整，组件标签拼写为 <code>face-ai-capture-compat</code>。</li>
+                <li>确认当前运行的是自定义基座。</li>
+              </ol>
+            </div>
+          </details>
+
+          <details>
+            <summary>组件显示黑屏或相机不出画面</summary>
+            <div>
+              <p>先检查相机权限、其他页面/SDK 是否占用相机、设备是否有可用摄像头。插件检测到预览未开始时会自动从 Performance 预览切到 Compatible 预览；仍失败会回调 <code>CAMERA_PREVIEW_NOT_STREAMING</code>。</p>
+            </div>
+          </details>
+
+          <details>
+            <summary>只回调一次 result，后面不再抓拍</summary>
+            <div>
+              <p>这是设计行为。嵌入组件每次成功后暂停检测，业务处理完本次结果后调用 <code>this.$refs.captureCompat.retry()</code> 开启下一轮。</p>
+            </div>
+          </details>
+
+          <details>
+            <summary>result 里的字段读取不到</summary>
+            <div>
+              <p>兼容模式事件跨 UTS / JS 桥接后，参数可能表现为普通对象、<code>event.detail</code> 或带 <code>get()</code> 的 Map。使用完整示例里的 <code>readField()</code> 统一读取。</p>
+            </div>
+          </details>
+
+          <details>
+            <summary>云打包提示 UniNativeViewElement 或 Theme.FaceAISDK.Fullscreen 找不到</summary>
+            <div>
+              <p>这是插件 2026.09.07 的传统 uni-app 编译兼容问题，不是业务页面错误。请更新到 2026.09.08 或更高版本，清理构建缓存后重新制作自定义基座。新版已用 <code>UNI-APP-X</code> 条件编译隔离标准模式桥接类，并把全屏 Activity 主题放入插件自身资源。</p>
+            </div>
+          </details>
+
+          <details>
+            <summary>自定义基座编译时出现 CameraX 冲突</summary>
+            <div>
+              <p>检查目标工程中其他相机、扫码、人脸插件是否重复声明不同版本的 <code>androidx.camera</code>。当前插件配置使用 CameraX <code>1.5.2</code>；统一依赖版本后重新制作基座。</p>
+            </div>
+          </details>
+
+          <details>
+            <summary>模拟器无法运行或找不到原生库</summary>
+            <div>
+              <p>插件配置支持 <code>armeabi-v7a</code> 和 <code>arm64-v8a</code>。不要使用仅 x86/x86_64 的模拟器镜像，优先使用 Android 真机或 ARM 模拟器。</p>
+            </div>
+          </details>
+
+          <details>
+            <summary>从系统设置返回后仍没有启动相机</summary>
+            <div>
+              <p>在页面 <code>onShow</code> 中重新检查/申请权限，权限成功后再令 <code>cameraGranted = true</code>，由 <code>v-if</code> 重新挂载组件。完整示例已包含该处理。</p>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <section class="section" id="checklist">
+        <div class="section-kicker">08 · Acceptance</div>
+        <h2>上线前验收清单</h2>
+        <ul class="checklist">
+          <li>目标工程存在完整的 <code>uni_modules/FaceAI-Search</code>。</li>
+          <li>抓拍承载页后缀为 <code>.nvue</code>，并已在 <code>pages.json</code> 注册。</li>
+          <li>组件已设置明确宽高，真机旋转或窗口变化后仍有非零尺寸。</li>
+          <li>首次进入、拒绝权限、永久拒绝、从系统设置返回四条路径均可用。</li>
+          <li>收到 <code>result</code> 后能够展示/处理两张图片和静默活体分数。</li>
+          <li>点击“再次抓拍”会调用 <code>retry()</code>，不会重复并发调用。</li>
+          <li>前置/后置切换成功；只有单摄像头时能够妥善处理错误事件。</li>
+          <li>退出页面后相机被释放，再次进入仍能正常启动。</li>
+          <li>前台/后台切换、横竖屏、手机/平板布局均已在真实目标设备验证。</li>
+          <li>使用自定义调试基座完成开发验收，发布时重新制作正式安装包。</li>
+        </ul>
+      </section>
+
+      <section class="section" id="references">
+        <div class="section-kicker">09 · References</div>
+        <h2>实现依据与参考资料</h2>
+        <p>本文按仓库当前源码与 DCloud 官方文档整理，版本变化后请优先核对插件自身的 <code>package.json</code>、<code>config.json</code> 和组件入口。</p>
+        <ul class="source-list">
+          <li><strong>插件源码：</strong><code>uni_modules/FaceAI-Search/utssdk/app-android/index.vue</code>（组件属性、事件、方法）</li>
+          <li><strong>插件源码：</strong><code>CaptureFaceNativeView.kt</code>（相机生命周期、抓拍暂停/重试、错误码）</li>
+          <li><a href="https://doc.dcloud.net.cn/uni-app-x/plugin/uts-component-compatible.html">DCloud：UTS 组件 uni-app 兼容模式开发</a></li>
+          <li><a href="https://doc.dcloud.net.cn/uni-app-x/plugin/uts-component.html">DCloud：UTS 组件开发模式概述</a></li>
+          <li><a href="https://uniapp.dcloud.net.cn/tutorial/app-permission-android.html">DCloud：Android 平台权限配置</a></li>
+          <li><a href="https://uniapp.dcloud.net.cn/api/system/openappauthorizesetting.html">DCloud：uni.openAppAuthorizeSetting</a></li>
+          <li><a href="https://uniapp.dcloud.net.cn/tutorial/run/run-app#customplayground">DCloud：自定义调试基座</a></li>
+        </ul>
+      </section>
+    </main>
+  </div>
+
+  <footer class="footer">
+    FaceAI Search 抓拍兼容模式接入指引 · 基于插件 2026.09.08 · 文档生成日期 2026-09-08
+  </footer>
+
+  <script>
+    (function () {
+      var copyButtons = document.querySelectorAll('.copy-button');
+      copyButtons.forEach(function (button) {
+        button.addEventListener('click', function () {
+          var code = button.closest('.code-wrap').querySelector('code').innerText;
+          var original = button.textContent;
+
+          function done(label) {
+            button.textContent = label;
+            window.setTimeout(function () { button.textContent = original; }, 1400);
+          }
+
+          if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(code).then(function () {
+              done('已复制');
+            }).catch(function () {
+              done('复制失败');
+            });
+            return;
+          }
+
+          var textarea = document.createElement('textarea');
+          textarea.value = code;
+          textarea.setAttribute('readonly', '');
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+          textarea.select();
+          try {
+            document.execCommand('copy');
+            done('已复制');
+          } catch (error) {
+            done('复制失败');
+          }
+          document.body.removeChild(textarea);
+        });
+      });
+
+      var jump = document.getElementById('section-jump');
+      jump.addEventListener('change', function () {
+        var target = document.querySelector(jump.value);
+        if (target) target.scrollIntoView({ behavior: 'smooth' });
+      });
+
+      var links = Array.prototype.slice.call(document.querySelectorAll('.nav-link'));
+      var sections = Array.prototype.slice.call(document.querySelectorAll('main > section[id]'));
+      if ('IntersectionObserver' in window) {
+        var observer = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (!entry.isIntersecting) return;
+            links.forEach(function (link) {
+              link.classList.toggle('active', link.getAttribute('href') === '#' + entry.target.id);
+            });
+            jump.value = '#' + entry.target.id;
+          });
+        }, { rootMargin: '-12% 0px -72% 0px' });
+        sections.forEach(function (section) { observer.observe(section); });
+      }
+    })();
+  </script>
+</body>
+</html>

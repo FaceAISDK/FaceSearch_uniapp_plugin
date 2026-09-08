@@ -67,6 +67,10 @@ export function captureFaceByCamera(
     })
 }
 
+// UniNativeViewElement 及其 Android View 绑定 API 仅存在于 uni-app x。
+// 传统 uni-app 会编译同一个 UTS API 入口，因此必须排除标准模式组件桥接代码。
+// #ifdef UNI-APP-X
+
 /**
  * 标准模式组件对 CaptureFaceNativeView 的实例封装。
  */
@@ -244,6 +248,8 @@ export class FaceSearchViewContext {
         this.nativeView.release()
     }
 }
+
+// #endif
 
 /**
  * 启动持续人脸搜索 Activity
