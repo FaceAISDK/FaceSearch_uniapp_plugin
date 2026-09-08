@@ -1,21 +1,47 @@
 <template>
-	<view>
-		<button class="gray-button" @tap="faceSearchByCameraDemo">1:N相机人脸搜索识别</button>
-		<button class="gray-button" @tap="faceSearchByImageDemo">图片人脸搜索识别(Beta)</button>
-	
-		<button class="gray-button" @tap="addFaceSearchFeatureByCameraDemo">SDK相机录入人脸信息</button>
-		<button class="gray-button" @tap="addFaceSearchFeatureByImageDemo">通过图片录入人脸信息</button>	
-		<button class="gray-button" @tap="deleteFaceSearchFeatureDemo">删除人脸搜索特征值</button>
-		<button class="gray-button" @tap="queryFaceSearchFeatureDemo">查询人脸搜索特征值</button>
-		<button class="gray-button" @tap="insertFaceSearchFeatureDemo">同步人脸搜索特征值</button>
-		<button class="gray-button" @tap="insertManyFaceFeatureSDemo">批量同步人脸搜索特征值</button>
-		<button class="gray-button" @tap="switchCameraDemo">切换前后摄像头</button>
-		
-		<view class="result-box">
-		    <scroll-view scroll-y="true" class="scroll-view-box">
-		        <text class="text-content">{{faceSearchResult}}</text>
-		    </scroll-view>
-			<view> Email: FaceAISDK.Service@gmail.com</view>
+	<view
+		class="page"
+		:class="useWideLayout ? 'page-landscape' : 'page-portrait'"
+	>
+		<scroll-view scroll-y="true" class="menu-panel">
+			<view class="menu-group">
+				<text class="group-title">搜索与录入</text>
+				<view class="button-grid">
+					<button class="gray-button" @tap="faceSearchByCameraDemo">UTS API 全屏相机搜索</button>
+					<button class="gray-button" @tap="openSearchComponentDemo">标准模式相机搜索（组合嵌入）</button>
+					<button class="gray-button" @tap="openSearchCompatDemo">兼容模式相机搜索（组合嵌入）</button>
+					<button class="gray-button" @tap="faceSearchByImageDemo">图片人脸搜索识别(Beta)</button>
+					<button class="gray-button" @tap="addFaceSearchFeatureByCameraDemo">SDK相机录入人脸信息</button>
+					<button class="gray-button" @tap="addFaceSearchFeatureByImageDemo">通过图片录入人脸信息</button>
+				</view>
+			</view>
+			<view class="menu-group">
+				<text class="group-title">特征管理</text>
+				<view class="button-grid">
+					<button class="gray-button" @tap="deleteFaceSearchFeatureDemo">删除人脸搜索特征值</button>
+					<button class="gray-button" @tap="queryFaceSearchFeatureDemo">查询人脸搜索特征值</button>
+					<button class="gray-button" @tap="insertFaceSearchFeatureDemo">同步人脸搜索特征值</button>
+					<button class="gray-button" @tap="insertManyFaceFeatureSDemo">批量同步人脸搜索特征值</button>
+				</view>
+			</view>
+			<view class="menu-group">
+				<text class="group-title">抓拍能力</text>
+				<view class="button-grid">
+					<button class="gray-button" @tap="captureFaceByCameraDemo">UTS API 全屏持续抓拍</button>
+					<button class="gray-button" @tap="openCaptureComponentDemo">标准模式抓拍组件（组合嵌入）</button>
+					<button class="gray-button" @tap="openCaptureCompatDemo">兼容模式抓拍组件（组合嵌入）</button>
+				</view>
+			</view>
+		</scroll-view>
+
+		<view
+			class="result-box"
+			:class="useWideLayout ? 'result-box-landscape' : 'result-box-portrait'"
+		>
+			<scroll-view scroll-y="true" class="scroll-view-box">
+				<text class="text-content">{{faceSearchResult}}</text>
+			</scroll-view>
+			<text class="email-text">Email: FaceAISDK.Service@gmail.com</text>
 		</view>
 	</view>
 </template>
@@ -32,9 +58,12 @@
 			addFaceSearchFeatureByImage,
 			deleteFaceSearchFeature,
 			queryFaceSearchFeature,
+			captureFaceByCamera,
 			toastMessage,
 			TTSPlayer,
-			ResultJSON} from "@/uni_modules/FaceAI-Search";
+			ResultJSON,
+			CaptureFaceResult,
+			CaptureFaceError} from "@/uni_modules/FaceAI-Search";
 			
 	// 注意：vue应该使用 testData.js 而不是 testData.uts	
     import { JSON_FACE_FEATURES_DATA } from "./faceFeatureList.uts";  //模拟服务端测试数据批量插入
@@ -47,12 +76,18 @@
 				faceID: 'Test',
 				faceFeature: 'faceFeature is a string with lenth 1024',
 				faceSearchResult: 'faceSearchResult',
+				captureFaceCount: 0,
+				useWideLayout: false,
 				base64FaceSearch: base64FaceSearch as string, //人脸像素宽高需要大于130，无遮挡的清晰正脸
 				base64FaceImage:base64FaceImage as string //建议640*480 人脸图需要遵守规范：https://i.postimg.cc/RCwNy0kV/add-Face.jpg
 			}
 		},
 		onLoad() {
-
+			const windowInfo = uni.getWindowInfo()
+			this.useWideLayout = windowInfo.windowWidth > windowInfo.windowHeight && windowInfo.windowWidth >= 600
+		},
+		onResize(options: OnResizeOptions) {
+			this.useWideLayout = options.size.windowWidth > options.size.windowHeight && options.size.windowWidth >= 600
 		},
 		
 		methods: {
@@ -273,7 +308,52 @@
 			*/
 			switchCameraDemo: function () {
 				switchCamera(0)
-			},		
+			},
+
+			/** UTS API：打开全屏页面并持续返回抓拍结果。 */
+			captureFaceByCameraDemo: function () {
+				captureFaceByCamera(
+					1,
+					true,
+					0,
+					0.12,
+					-1,
+					(result: CaptureFaceResult) => {
+						this.captureFaceCount++
+						this.faceSearchResult = `【API持续抓拍 #${this.captureFaceCount}】\n` +
+							`silentScore: ${result.silentScore}\n` +
+							`croppedBase64 length: ${result.croppedBase64.length}\n` +
+							`originBase64 length: ${result.originBase64.length}`
+					},
+					(error: CaptureFaceError) => {
+						this.faceSearchResult = `【持续抓拍错误】${error.code}: ${error.message}`
+					}
+				)
+			},
+
+			openCaptureComponentDemo: function () {
+				uni.navigateTo({
+					url: "/pages/capture-component-demo/capture-component-demo"
+				})
+			},
+
+			openCaptureCompatDemo: function () {
+				uni.navigateTo({
+					url: "/pages/capture-compat-demo/capture-compat-demo"
+				})
+			},
+
+			openSearchComponentDemo: function () {
+				uni.navigateTo({
+					url: "/pages/search-component-demo/search-component-demo"
+				})
+			},
+
+			openSearchCompatDemo: function () {
+				uni.navigateTo({
+					url: "/pages/search-compat-demo/search-compat-demo"
+				})
+			},
 			
 			
 	   }			
@@ -282,34 +362,100 @@
 </script>
 
 <style>
-    /* 给滚动区域一个固定高度和边框 */
-    .result-box {
-        margin: 20rpx;
-    }
-    
-    .scroll-view-box {
-        height: 400rpx; /* 必须指定高度，否则无法滚动 */
-        border: 1px solid #ccc;
-        border-radius: 10rpx;
-        background-color: #f8f8f8;
-        padding: 15rpx;
-        box-sizing: border-box; /* 确保padding不撑大宽高 */
-    }
+	.page {
+		flex: 1;
+		min-width: 0;
+		min-height: 0;
+		padding: 12px;
+		box-sizing: border-box;
+		background-color: #ffffff;
+	}
 
-    .text-content {
-        font-size: 28rpx;
-        color: #333; /* word-break: break-all; 关键：解决长JSON字符串不换行的问题 */
-        white-space: pre-wrap; /* 保留格式并自动换行 */
-    }
+	.page-portrait {
+		flex-direction: column;
+	}
+
+	.page-landscape {
+		flex-direction: row;
+		align-items: stretch;
+	}
+
+	.menu-panel {
+		flex: 1;
+		min-width: 0;
+		min-height: 0;
+		padding-right: 6px;
+		box-sizing: border-box;
+	}
+
+	.menu-group {
+		margin-bottom: 8px;
+	}
+
+	.group-title {
+		margin-left: 4px;
+		color: #6f6472;
+		font-size: 14px;
+	}
+
+	.button-grid {
+		flex-direction: row;
+		flex-wrap: wrap;
+	}
+
+	.gray-button {
+		flex: 1;
+		min-width: 280px;
+		margin: 4px;
+		background-color: #faf7fa;
+		color: #800080;
+		font-size: 18px;
+		border: 1px solid #eadfea;
+		border-radius: 8px;
+	}
+
+	.result-box {
+		flex-direction: column;
+		min-width: 0;
+		min-height: 0;
+		padding: 10px;
+		border-width: 1px;
+		border-style: solid;
+		border-color: #d8d8d8;
+		border-radius: 10px;
+		box-sizing: border-box;
+		background-color: #f8f8f8;
+	}
+
+	.result-box-portrait {
+		height: 176px;
+		margin-top: 12px;
+		flex-shrink: 0;
+	}
+
+	.result-box-landscape {
+		width: 42%;
+		margin-left: 12px;
+		flex-shrink: 0;
+		align-self: stretch;
+	}
+
+	.scroll-view-box {
+		flex: 1;
+		min-height: 0;
+		width: 100%;
+	}
+
+	.text-content {
+		color: #333333;
+		font-size: 14px;
+		line-height: 20px;
+		white-space: pre-wrap;
+	}
+
+	.email-text {
+		margin-top: 4px;
+		color: #777777;
+		font-size: 11px;
+	}
 </style>
-
-
-<style>
-    .gray-button {
-    	background-color: #ffffff; /* 灰色背景 */
-    	color: #800080;            /* 深灰色文字 */
-    	border: none;
-    }
-
-</style>
-    

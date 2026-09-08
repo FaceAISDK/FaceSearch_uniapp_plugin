@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Keep the Activity theme in the UTS module itself. Traditional uni-app
+        cloud packaging verifies this module's manifest before dependency AAR
+        resources are merged, so relying on the SDK AAR's same-named style can
+        fail with "resource style/Theme.FaceAISDK.Fullscreen not found".
+    -->
+    <style name="Theme.FaceAISDK.Fullscreen" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:windowNoTitle">true</item>
+        <item name="windowActionBar">false</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowActionBarOverlay">true</item>
+        <item name="android:windowBackground">@color/face_main_color</item>
+    </style>
+</resources>

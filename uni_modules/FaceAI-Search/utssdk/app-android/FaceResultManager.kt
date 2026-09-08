@@ -17,5 +17,9 @@ object FaceResultManager {
     fun sendResult(json: String, liveness: Float, base64: String) {
         internalCallback?.invoke(json, liveness, base64)
     }
-	
+
+    // Activity 真正退出时释放 UTS 页面回调，避免持有已销毁页面。
+    fun clear() {
+        internalCallback = null
+    }
 }

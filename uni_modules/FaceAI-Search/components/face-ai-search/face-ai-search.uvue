@@ -1,0 +1,111 @@
+<template>
+  <native-view class="face-ai-search-native" @init="onNativeViewInit" />
+</template>
+
+<script setup lang="uts">
+import {
+  FaceSearchViewContext,
+  FaceSearchResult,
+  FaceSearchTips,
+  FaceSearchError,
+  FaceSearchCameraChange
+} from "@/uni_modules/FaceAI-Search"
+
+type FaceSearchProps = {
+  searchThreshold: number
+  searchOneTime: boolean
+  searchTimeOut: number
+  needLivenessCheck: boolean
+  cameraId: number
+  linearZoom: number
+  rotationDegrees: number
+  showFaceCover: boolean
+  autoStart: boolean
+}
+
+const props = withDefaults(defineProps<FaceSearchProps>(), {
+  searchThreshold: 0.86,
+  searchOneTime: false,
+  searchTimeOut: 4000,
+  needLivenessCheck: true,
+  cameraId: 0,
+  linearZoom: 0.12,
+  rotationDegrees: -1,
+  showFaceCover: true,
+  autoStart: true
+})
+
+const emit = defineEmits<{
+  (e: "ready"): void
+  (e: "result", result: FaceSearchResult): void
+  (e: "tips", tips: FaceSearchTips): void
+  (e: "error", error: FaceSearchError): void
+  (e: "camera-change", result: FaceSearchCameraChange): void
+}>()
+
+let searchContext: FaceSearchViewContext | null = null
+
+function start() {
+  searchContext?.setFaceCoverVisible(props.showFaceCover)
+  searchContext?.start(
+    props.searchThreshold,
+    props.searchOneTime,
+    props.searchTimeOut,
+    props.needLivenessCheck,
+    props.cameraId,
+    props.linearZoom,
+    props.rotationDegrees
+  )
+}
+
+function stop() {
+  searchContext?.stop()
+}
+
+function switchCamera(cameraId: number) {
+  searchContext?.switchCamera(cameraId)
+}
+
+function toggleCamera() {
+  searchContext?.toggleCamera()
+}
+
+function canSwitchCamera(): boolean {
+  return searchContext?.canSwitchCamera() ?? false
+}
+
+function onNativeViewInit(event: UniNativeViewInitEvent) {
+  searchContext = new FaceSearchViewContext(event.detail.element)
+  searchContext?.setFaceCoverVisible(props.showFaceCover)
+  searchContext?.setResultCallback((result: FaceSearchResult) => {
+    emit("result", result)
+  })
+  searchContext?.setTipsCallback((tips: FaceSearchTips) => {
+    emit("tips", tips)
+  })
+  searchContext?.setErrorCallback((error: FaceSearchError) => {
+    emit("error", error)
+  })
+  searchContext?.setCameraChangedCallback((result: FaceSearchCameraChange) => {
+    emit("camera-change", result)
+  })
+  emit("ready")
+  if (props.autoStart) {
+    start()
+  }
+}
+
+onUnmounted(() => {
+  searchContext?.destroy()
+  searchContext = null
+})
+
+defineExpose({ start, stop, switchCamera, toggleCamera, canSwitchCamera })
+</script>
+
+<style>
+.face-ai-search-native {
+  width: 100%;
+  height: 100%;
+}
+</style>

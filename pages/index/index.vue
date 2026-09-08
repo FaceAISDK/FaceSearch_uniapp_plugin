@@ -1,20 +1,43 @@
 <template>
-	<view>
-		<button class="gray-button" @tap="faceSearchByCameraDemo">1:N相机人脸搜索识别</button>
-		<button class="gray-button" @tap="faceSearchByImageDemo">图片人脸搜索识别(Beta)</button>
-	
-		<button class="gray-button" @tap="addFaceSearchFeatureByCameraDemo">SDK相机录入人脸信息</button>
-		<button class="gray-button" @tap="addFaceSearchFeatureByImageDemo">通过图片录入人脸信息</button>	
-		<button class="gray-button" @tap="deleteFaceSearchFeatureDemo">删除人脸搜索特征值</button>
-		<button class="gray-button" @tap="queryFaceSearchFeatureDemo">查询人脸搜索特征值</button>
-		<button class="gray-button" @tap="insertFaceSearchFeatureDemo">同步人脸搜索特征值</button>
-		<button class="gray-button" @tap="insertManyFaceFeatureSDemo">批量同步人脸搜索特征值</button>
-		
-		<view class="result-box">
-		      <view> Email: FaceAISDK.Service@gmail.com</view>
-		       <scroll-view scroll-y="true" class="scroll-view-box">
-		       <text class="text-content">{{faceAIResult}}</text>
-		       </scroll-view>
+	<view
+		class="page"
+		:class="useWideLayout ? 'page-landscape' : 'page-portrait'"
+	>
+		<scroll-view scroll-y="true" class="menu-panel">
+			<view class="menu-group">
+				<text class="group-title">搜索与录入</text>
+				<view class="button-grid">
+					<button class="gray-button" @tap="faceSearchByCameraDemo">相机人脸搜索识别</button>
+					<button class="gray-button" @tap="faceSearchByImageDemo">图片人脸搜索识别(Beta)</button>
+					<button class="gray-button" @tap="addFaceSearchFeatureByCameraDemo">SDK相机录入人脸信息</button>
+					<button class="gray-button" @tap="addFaceSearchFeatureByImageDemo">通过图片录入人脸信息</button>
+				</view>
+			</view>
+			<view class="menu-group">
+				<text class="group-title">特征管理</text>
+				<view class="button-grid">
+					<button class="gray-button" @tap="deleteFaceSearchFeatureDemo">删除人脸搜索特征值</button>
+					<button class="gray-button" @tap="queryFaceSearchFeatureDemo">查询人脸搜索特征值</button>
+					<button class="gray-button" @tap="insertFaceSearchFeatureDemo">同步人脸搜索特征值</button>
+					<button class="gray-button" @tap="insertManyFaceFeatureSDemo">批量同步人脸搜索特征值</button>
+				</view>
+			</view>
+			<view class="menu-group">
+				<text class="group-title">抓拍能力</text>
+				<view class="button-grid">
+					<button class="gray-button" @tap="captureFaceByCameraDemo">UTS API 全屏持续抓拍</button>
+				</view>
+			</view>
+		</scroll-view>
+
+		<view
+			class="result-box"
+			:class="useWideLayout ? 'result-box-landscape' : 'result-box-portrait'"
+		>
+			<scroll-view scroll-y="true" class="scroll-view-box">
+				<text class="text-content">{{faceAIResult}}</text>
+			</scroll-view>
+			<text class="email-text">Email: FaceAISDK.Service@gmail.com</text>
 		</view>
 	</view>
 </template>
@@ -31,6 +54,7 @@
 		addFaceSearchFeatureByImage,
 		deleteFaceSearchFeature,
 		queryFaceSearchFeature,
+		captureFaceByCamera,
 		TTSPlayer,
 		toastMessage
 	} from "@/uni_modules/FaceAI-Search";
@@ -44,16 +68,42 @@
 			return {
 				faceID: 'Test',
 				faceFeature: 'faceFeature is a string with lenth 1024',
-				faceAIResult: 'faceAIResult',
+			faceAIResult: 'faceAIResult',
+			captureFaceCount: 0,
+				useWideLayout: false,
 				base64FaceSearch: base64FaceSearch,
 				base64FaceImage: base64FaceImage  //建议640*480 人脸图需要遵守规范：https://i.postimg.cc/RCwNy0kV/add-Face.jpg
 			}
 		},
 		onLoad() {
-
+			const windowInfo = uni.getWindowInfo()
+			this.useWideLayout = windowInfo.windowWidth > windowInfo.windowHeight && windowInfo.windowWidth >= 600
+		},
+		onResize(options) {
+			this.useWideLayout = options.size.windowWidth > options.size.windowHeight && options.size.windowWidth >= 600
 		},
 		
 		methods: {
+			captureFaceByCameraDemo: function () {
+				captureFaceByCamera(
+					1,
+					true,
+					0,
+					0.12,
+					-1,
+					(result) => {
+						this.captureFaceCount++
+						this.faceAIResult = `持续抓拍 #${this.captureFaceCount}\n` +
+							`silentScore: ${result.silentScore}\n` +
+							`croppedBase64 length: ${result.croppedBase64.length}\n` +
+							`originBase64 length: ${result.originBase64.length}`
+					},
+					(error) => {
+						this.faceAIResult = `持续抓拍错误 ${error.code}: ${error.message}`
+					}
+				)
+			},
+
 			/**
 			 * 1:N相机人脸搜索识别，建议使用SDK相机录入人脸，图片没有校验
 			 * threshold默认0.85以上，否则可能误识别 以及强烈建议使用SDK 相机录入人脸
@@ -261,31 +311,103 @@
 </script>
 
 <style>
-    /* 给滚动区域一个固定高度和边框 */
-    .result-box {
-        margin: 20rpx;
-    }
-    
-    .scroll-view-box {
-        height: 400rpx;
-        border: 1px solid #ccc;
-        border-radius: 10rpx;
-        background-color: #f8f8f8;
-        padding: 15rpx;
-        box-sizing: border-box;
-    }
+	.page {
+		display: flex;
+		min-width: 0;
+		min-height: 100vh;
+		padding: 12px;
+		box-sizing: border-box;
+		background-color: #ffffff;
+	}
 
-    .text-content {
-        font-size: 28rpx;
-        color: #333;
-        white-space: pre-wrap;
-    }
-</style>
+	.page-portrait {
+		flex-direction: column;
+	}
 
-<style>
-    .gray-button {
-    	background-color: #ffffff;
-    	color: #800080;
-    	border: none;
-    }
+	.page-landscape {
+		flex-direction: row;
+		height: 100vh;
+		min-height: 0;
+		align-items: stretch;
+	}
+
+	.menu-panel {
+		flex: 1;
+		min-width: 0;
+		min-height: 0;
+		padding-right: 6px;
+		box-sizing: border-box;
+	}
+
+	.menu-group {
+		margin-bottom: 8px;
+	}
+
+	.group-title {
+		display: block;
+		margin-left: 4px;
+		color: #6f6472;
+		font-size: 14px;
+	}
+
+	.button-grid {
+		display: flex;
+		flex-direction: row;
+		flex-wrap: wrap;
+	}
+
+	.gray-button {
+		flex: 1;
+		min-width: 280px;
+		margin: 4px;
+		background-color: #faf7fa;
+		color: #800080;
+		font-size: 18px;
+		border: 1px solid #eadfea;
+		border-radius: 8px;
+	}
+
+	.result-box {
+		display: flex;
+		flex-direction: column;
+		min-width: 0;
+		min-height: 0;
+		padding: 10px;
+		border: 1px solid #d8d8d8;
+		border-radius: 10px;
+		box-sizing: border-box;
+		background-color: #f8f8f8;
+	}
+
+	.result-box-portrait {
+		height: 176px;
+		margin-top: 12px;
+		flex-shrink: 0;
+	}
+
+	.result-box-landscape {
+		width: 42%;
+		margin-left: 12px;
+		flex-shrink: 0;
+		align-self: stretch;
+	}
+
+	.scroll-view-box {
+		flex: 1;
+		min-height: 0;
+		width: 100%;
+	}
+
+	.text-content {
+		color: #333333;
+		font-size: 14px;
+		line-height: 20px;
+		white-space: pre-wrap;
+	}
+
+	.email-text {
+		margin-top: 4px;
+		color: #777777;
+		font-size: 11px;
+	}
 </style>

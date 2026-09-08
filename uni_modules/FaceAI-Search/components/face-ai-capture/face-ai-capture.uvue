@@ -1,0 +1,109 @@
+<template>
+  <native-view class="face-ai-capture-native" @init="onNativeViewInit" />
+</template>
+
+<script setup lang="uts">
+import {
+  CaptureFaceViewContext,
+  CaptureFaceResult,
+  CaptureFaceTips,
+  CaptureFaceError,
+  CaptureFaceCameraChange
+} from "@/uni_modules/FaceAI-Search"
+
+type CaptureFaceProps = {
+  performanceMode: number
+  needLivenessCheck: boolean
+  cameraId: number
+  linearZoom: number
+  rotationDegrees: number
+  showFaceCover: boolean
+  autoStart: boolean
+}
+
+const props = withDefaults(defineProps<CaptureFaceProps>(), {
+  performanceMode: 1,
+  needLivenessCheck: true,
+  cameraId: 0,
+  linearZoom: 0.12,
+  rotationDegrees: -1,
+  showFaceCover: false,
+  autoStart: true
+})
+
+const emit = defineEmits<{
+  (e: "ready"): void
+  (e: "result", result: CaptureFaceResult): void
+  (e: "tips", tips: CaptureFaceTips): void
+  (e: "error", error: CaptureFaceError): void
+  (e: "camera-change", result: CaptureFaceCameraChange): void
+}>()
+
+let captureContext: CaptureFaceViewContext | null = null
+
+function start() {
+  captureContext?.setFaceCoverVisible(props.showFaceCover)
+  captureContext?.start(
+    props.performanceMode,
+    props.needLivenessCheck,
+    props.cameraId,
+    props.linearZoom,
+    props.rotationDegrees
+  )
+}
+
+function onNativeViewInit(event: UniNativeViewInitEvent) {
+  captureContext = new CaptureFaceViewContext(event.detail.element)
+  captureContext?.setFaceCoverVisible(props.showFaceCover)
+  captureContext?.setResultCallback((result: CaptureFaceResult) => {
+    emit("result", result)
+  })
+  captureContext?.setTipsCallback((tips: CaptureFaceTips) => {
+    emit("tips", tips)
+  })
+  captureContext?.setErrorCallback((error: CaptureFaceError) => {
+    emit("error", error)
+  })
+  captureContext?.setCameraChangedCallback((result: CaptureFaceCameraChange) => {
+    emit("camera-change", result)
+  })
+  emit("ready")
+  if (props.autoStart) {
+    start()
+  }
+}
+
+function stop() {
+  captureContext?.stop()
+}
+
+function retry() {
+  captureContext?.retry()
+}
+
+function switchCamera(cameraId: number) {
+  captureContext?.switchCamera(cameraId)
+}
+
+function toggleCamera() {
+  captureContext?.toggleCamera()
+}
+
+function canSwitchCamera(): boolean {
+  return captureContext?.canSwitchCamera() ?? false
+}
+
+onUnmounted(() => {
+  captureContext?.destroy()
+  captureContext = null
+})
+
+defineExpose({ start, stop, retry, switchCamera, toggleCamera, canSwitchCamera })
+</script>
+
+<style>
+.face-ai-capture-native {
+  width: 100%;
+  height: 100%;
+}
+</style>

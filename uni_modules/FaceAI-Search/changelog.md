@@ -1,3 +1,50 @@
+## 2026.09.08（2026-09-08）
+
+- 修复传统 uni-app 云打包时误编译标准模式组件桥接代码，导致 `UniNativeViewElement`、`getAndroidActivity` 和 `bindAndroidView` 无法解析的问题。
+- 将全屏抓拍 Activity 主题补充到插件自身资源中，修复 `Theme.FaceAISDK.Fullscreen` 资源链接失败。
+
+## 2026.09.07（2026-09-07）
+优化细节，抓拍防抖
+## 2026.09.05（2026-09-05）
+- 新增相机人脸搜索标准模式组件 `face-ai-search` 和兼容模式组件 `face-ai-search-compat`。
+- 两种搜索组件共用原生 CameraX 搜索 View，支持启停、前后镜头切换、横竖屏旋转及结果/提示/错误事件。
+- 相机搜索组件默认显示原生 `FaceCoverView`，并新增两个简洁演示入口。
+- 新加人脸采集（可以把数据送入到自己的人脸识别服务器识别，而不是本插件的离线识别模式）
+## 2026.09.04
+
+- 相机预览改为居中裁剪并铺满组件，移除宽高比不一致时的上下黑边。
+- 修复 uni-app x 兼容模式示例使用 `$callMethod` 导致 `retry()` 和摄像头切换不生效的问题。
+- 标准模式和兼容模式抓拍组件新增 `showFaceCover` 参数，默认隐藏 `FaceCoverView`；全屏抓拍保持显示。
+- 移除抓拍 API 和组件的 `cameraSizeHigh` 参数，分析分辨率固定为普通的 4:3 模式。
+- 修复 `showFaceCover=false` 时内部提示刷新可能重新显示原生遮罩的问题。
+- 标准模式和兼容模式抓拍组件改为单次门控：成功后暂停，仅显式调用 `retry()` 才开始下一轮；全屏 UTS API 保持连续回调。
+- 标准模式和兼容模式验收页新增“开始/再次抓拍”与“切换前后相机”按钮。
+- 两个抓拍验收页放大顶部提示和底部状态文字，并将相机区域缩小为原尺寸的 80%。
+- 优化两个抓拍验收页的相机权限状态机：防止重复申请，区分普通拒绝与禁止再次询问，并在从系统设置返回或权限被撤销时重新校验。
+- 持续抓拍 API、标准组件和兼容组件新增 `rotationDegrees=-1` 自动方向模式，两个组件默认使用该模式。
+- CameraX 预览与分析用例会在显示方向变化时动态更新目标旋转。
+- 修复全屏抓拍 Activity 因横竖屏重建而丢失回调和当前镜头的问题。
+- 全屏抓拍和人脸搜索页的按钮根据系统栏及刘海安全区动态调整边距。
+- Demo 开启横竖屏自动适配，抓拍页使用响应式横、竖布局。
+
+## 2026.09.02
+
+- `FaceSearchActivity` 和全屏持续抓拍页新增运行时前/后摄像头切换。
+- 抓拍组件新增 `toggleCamera()`、`canSwitchCamera()` 和 `camera-change` 事件，指定镜头切换失败时保留原预览。
+- 新增标准模式、兼容模式组件的独立演示页面入口。
+- 修复组件在 `native-view` 尚未完成布局时提前绑定 CameraX 导致的预览黑屏。
+- CameraX 预览优先使用 `SurfaceView`，未进入流状态时自动回退 `TextureView` 重试。
+- 显式配置 Maven Central，修复阿里云镜像未同步新版 FaceAI SDK 时的云打包失败。
+- 修复 UTS/D8 环境下 CameraX `ImageAnalysis.Analyzer` Lambda 缺少默认方法导致的预览黑屏，并统一 CameraX 依赖版本。
+
+## 2026.09.01
+
+- 新增全屏 UTS API `captureFaceByCamera`，持续返回裁剪人脸、静默活体分数和相机原图。
+- 新增标准模式组件 `face-ai-capture`。
+- 新增 uni-app 兼容模式组件 `face-ai-capture-compat`。
+- 三种入口共用 `CaptureFaceNativeView`，统一 CameraX、连续重试和资源释放行为。
+- Android SDK 升级到 `2026.08.31.capture02`，持续抓拍改用 `CaptureFaceDispose`。
+
 ## 2026.08.15（2026-08-16）
 升级SDK，缩减SDK体积，美化UI
 ## 2026.06.08（2026-06-08）

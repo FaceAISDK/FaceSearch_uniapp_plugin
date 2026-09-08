@@ -9,12 +9,74 @@ export type ResultJSON = {
 }
 
 /**
+ * 持续人脸抓拍结果。
+ * croppedBase64 为 SDK 检测、矫正并裁剪后的 224x224 人脸图；
+ * originBase64 为本次检测使用的相机原图。
+ */
+export type CaptureFaceResult = {
+  croppedBase64: string,
+  silentScore: number,
+  originBase64: string
+}
+
+export type CaptureFaceTips = {
+  code: number,
+  message: string
+}
+
+export type CaptureFaceError = {
+  code: string,
+  message: string
+}
+
+export type CaptureFaceCameraChange = {
+  cameraId: number
+}
+
+/** 可嵌入相机搜索组件的单次回调结果。 */
+export type FaceSearchResult = {
+  matchesJson: string,
+  liveness: number,
+  base64: string
+}
+
+export type FaceSearchTips = {
+  code: number,
+  message: string
+}
+
+export type FaceSearchError = {
+  code: string,
+  message: string
+}
+
+export type FaceSearchCameraChange = {
+  cameraId: number
+}
+
+/**
+ * 打开全屏相机并持续返回符合要求的人脸。
+ * @param performanceMode -1 无限制、0 简单、1 快速、2 精确
+ * @param needLivenessCheck 是否计算静默活体分数
+ * @param cameraId 0 前置、1 后置；不存在时自动降级到可用摄像头
+ * @param linearZoom 线性变焦，范围 0~1
+ * @param rotationDegrees 画面旋转角度，-1 跟随当前显示方向，或固定为 0/90/180/270
+ */
+export type CaptureFaceByCamera = (
+  performanceMode: number,
+  needLivenessCheck: boolean,
+  cameraId: number,
+  linearZoom: number,
+  rotationDegrees: number,
+  callback: (result: CaptureFaceResult) => void,
+  errorCallback: (error: CaptureFaceError) => void
+) => void
+
+/**
  * 开启持续人脸搜索 (Activity 常驻)
  * @param searchThreshold 人脸搜索阈值 (只有人脸库中匹配到的人脸相似度大于此才有结果返回)
  * @param searchOneTime 是否仅搜索一次 (搜索页持续搜索接收结果 还是仅仅搜索一次返回一次结果)
- * @param searchTimeOut [3,22]秒 仅仅是oneTime=true才生效，超时没有大于threshold搜索结果自动关闭页面
- * @param isCameraSizeHigh 是否高分辨率 (true，高分辨率模式，远距离识别更佳，但会牺牲性能和速度.以及定制设备可能黑屏不兼容)
- * @param cameraId 摄像头ID (前置摄像头 1，后置摄像头。否则进入兼容模式（部分摄像头需适配）)
+ * @param searchTimeOut 搜索超时时间，单位毫秒，范围 3000~6000；仅 searchOneTime=true 时用于无匹配结果后自动关闭页面
  * @param callback 接收搜索结果 JSON 字符串的回调
  */
 export type faceSearchByCamera = (
@@ -119,6 +181,3 @@ export type ToastMessage = (base64Image : string,message : string) => void
 export type TTSPlayer = (message : string) => void	
 
 export type SwitchCameta = (cameraID : number) => void	
-
-
-

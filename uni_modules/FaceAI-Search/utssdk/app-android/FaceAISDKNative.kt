@@ -41,7 +41,7 @@ import org.json.JSONObject
  
 /**
  *  kotlin 方法集  
- *
+ *  @author FaceAISDK.Service@gmail.com
  */
 object FaceAISDKNative {
 	

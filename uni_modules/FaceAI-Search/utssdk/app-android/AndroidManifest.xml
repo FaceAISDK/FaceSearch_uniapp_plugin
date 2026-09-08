@@ -3,6 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="uts.sdk.modules.uniFaceAISDK">
 
+    <uses-permission android:name="android.permission.CAMERA" />
+
     <application
         android:largeHeap="true"
         android:hardwareAccelerated="true">
@@ -10,7 +12,12 @@
 		<activity
 		    android:name=".FaceSearchActivity"
 		    android:exported="false"/>
+
+		<activity
+		    android:name=".CaptureFaceActivity"
+		    android:exported="false"
+		    android:theme="@style/Theme.FaceAISDK.Fullscreen"/>
 			
     </application>
 
-</manifest> 
+</manifest>

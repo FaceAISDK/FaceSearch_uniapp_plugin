@@ -5,9 +5,34 @@
 			"style": {
 				"navigationBarTitleText": "人脸搜索识别"
 			}
+		},
+		{
+			"path": "pages/capture-component-demo/capture-component-demo",
+			"style": {
+				"navigationBarTitleText": "标准模式抓拍验收"
+			}
+		},
+		{
+			"path": "pages/capture-compat-demo/capture-compat-demo",
+			"style": {
+				"navigationBarTitleText": "兼容模式抓拍验收"
+			}
+		},
+		{
+			"path": "pages/search-component-demo/search-component-demo",
+			"style": {
+				"navigationBarTitleText": "标准模式相机搜索"
+			}
+		},
+		{
+			"path": "pages/search-compat-demo/search-compat-demo",
+			"style": {
+				"navigationBarTitleText": "兼容模式相机搜索"
+			}
 		}
 	],
 	"globalStyle": {
+		"pageOrientation": "auto",
 		"navigationBarTextStyle": "white",
 		"navigationBarTitleText": "人脸搜索识别",
 		"navigationBarBackgroundColor": "#136918",

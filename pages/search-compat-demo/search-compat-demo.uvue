@@ -1,0 +1,287 @@
+<template>
+  <view class="page">
+    <view
+      v-if="cameraPermissionGranted"
+      class="content"
+      :class="useWideLayout ? 'content-landscape' : ''"
+    >
+      <view class="preview-frame" :class="useWideLayout ? 'preview-landscape' : ''">
+        <face-ai-search-compat
+          ref="searchRef"
+          class="search-view"
+          :autoStart="true"
+          @ready="onSearchReady"
+          @result="onResult"
+          @tips="onTips"
+          @error="onError"
+          @camera-change="onCameraChange"
+        />
+      </view>
+
+      <view class="panel" :class="useWideLayout ? 'panel-landscape' : ''">
+        <text class="demo-text matches-text">匹配结果：{{ matchesJson }}</text>
+        <view class="actions" :class="useWideLayout ? 'actions-landscape' : ''">
+          <button
+            class="button primary"
+            :class="useWideLayout ? 'button-landscape' : ''"
+            :disabled="!componentReady"
+            @tap="toggleSearch"
+          >
+            {{ searching ? '停止搜索' : '开始搜索' }}
+          </button>
+          <button
+            class="button"
+            :class="useWideLayout ? 'button-landscape' : ''"
+            :disabled="!componentReady"
+            @tap="toggleCamera"
+          >
+            切换到{{ currentCameraId == 0 ? '后置' : '前置' }}相机
+          </button>
+        </view>
+      </view>
+    </view>
+
+    <view v-else class="permission-panel">
+      <text class="demo-text permission-title">相机人脸搜索需要相机权限</text>
+      <text class="demo-text">图像仅在本机处理，不会上传。</text>
+      <button v-if="permissionPermanentlyDenied" class="permission-button" @tap="openSettings">
+        打开系统设置
+      </button>
+      <button v-else class="permission-button" @tap="requestPermission">授权相机</button>
+      <text class="demo-text">{{ statusText }}</text>
+    </view>
+  </view>
+</template>
+
+<script setup lang="uts">
+import { FaceAiSearchCompatElement } from "uts.sdk.modules.FaceAISearch"
+
+const CAMERA_PERMISSIONS: Array<string> = ["android.permission.CAMERA"]
+const searchRef = ref<FaceAiSearchCompatElement | null>(null)
+const cameraPermissionGranted = ref(false)
+const permissionPermanentlyDenied = ref(false)
+const componentReady = ref(false)
+const searching = ref(false)
+const currentCameraId = ref(0)
+const matchesJson = ref("[]")
+const statusText = ref("正在检查相机权限…")
+const useWideLayout = ref(false)
+let pageReady = false
+
+function updateLayout(width: number, height: number) {
+  useWideLayout.value = width > height && width >= 600
+}
+
+function mapString(values: Map<string, any>, key: string): string {
+  const value = values.get(key)
+  return value == null ? "" : (value as string)
+}
+
+function mapNumber(values: Map<string, any>, key: string): number {
+  const value = values.get(key)
+  return value == null ? 0 : (value as number)
+}
+
+function refreshPermission(): boolean {
+  const activity = UTSAndroid.getUniActivity()
+  const granted = activity != null &&
+    UTSAndroid.checkSystemPermissionGranted(activity, CAMERA_PERMISSIONS)
+  cameraPermissionGranted.value = granted
+  if (!granted) {
+    componentReady.value = false
+    searching.value = false
+    statusText.value = "请先授予相机权限"
+  }
+  return granted
+}
+
+function requestPermission() {
+  const activity = UTSAndroid.getUniActivity()
+  if (activity == null) {
+    statusText.value = "当前页面尚未连接 Android Activity"
+    return
+  }
+  UTSAndroid.requestSystemPermission(
+    activity,
+    CAMERA_PERMISSIONS,
+    (allRight: boolean, _grantedList: Array<string>) => {
+      cameraPermissionGranted.value = allRight
+      permissionPermanentlyDenied.value = false
+      statusText.value = allRight ? "正在加载兼容模式组件…" : "相机权限未授予"
+    },
+    (doNotAskAgain: boolean, _grantedList: Array<string>) => {
+      cameraPermissionGranted.value = false
+      permissionPermanentlyDenied.value = doNotAskAgain
+      statusText.value = doNotAskAgain ? "请到系统设置中开启相机权限" : "相机权限被拒绝"
+    }
+  )
+}
+
+function openSettings() {
+  const activity = UTSAndroid.getUniActivity()
+  if (activity != null) UTSAndroid.gotoSystemPermissionActivity(activity, CAMERA_PERMISSIONS)
+}
+
+function onSearchReady() {
+  componentReady.value = true
+  searching.value = true
+  statusText.value = "兼容模式相机搜索已启动"
+}
+
+function onResult(result: Map<string, any>) {
+  const base64 = mapString(result, "base64")
+  matchesJson.value = mapString(result, "matchesJson")
+  statusText.value = `收到搜索回调，场景图 ${base64.length} 字符`
+}
+
+function onTips(tips: Map<string, any>) {
+  const code = mapNumber(tips, "code")
+  if (code == 3) return
+  statusText.value = `提示 ${code}：${mapString(tips, 'message')}`
+}
+
+function onError(error: Map<string, any>) {
+  statusText.value = `错误 ${mapString(error, 'code')}：${mapString(error, 'message')}`
+  searching.value = false
+}
+
+function onCameraChange(result: Map<string, any>) {
+  currentCameraId.value = mapNumber(result, "cameraId")
+  statusText.value = `已切换到${currentCameraId.value == 0 ? '前置' : '后置'}相机`
+}
+
+function toggleSearch() {
+  const component = searchRef.value
+  if (component == null) return
+  if (searching.value) component.stop()
+  else component.start()
+  searching.value = !searching.value
+  statusText.value = searching.value ? "正在搜索…" : "搜索已停止"
+}
+
+function toggleCamera() {
+  searchRef.value?.toggleCamera()
+}
+
+onReady(() => {
+  pageReady = true
+  const windowInfo = uni.getWindowInfo()
+  updateLayout(windowInfo.windowWidth, windowInfo.windowHeight)
+  if (!refreshPermission()) requestPermission()
+})
+
+onShow(() => {
+  if (pageReady) refreshPermission()
+})
+
+onHide(() => {
+  searchRef.value?.stop()
+  searching.value = false
+})
+
+onResize((options: OnResizeOptions) => {
+  updateLayout(options.size.windowWidth, options.size.windowHeight)
+})
+</script>
+
+<style>
+.page {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  padding: 12px;
+  background-color: #f5f7fa;
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.content-landscape {
+  flex-direction: row;
+}
+
+.preview-frame {
+  flex: 1;
+  min-height: 280px;
+  overflow: hidden;
+  border-radius: 12px;
+  background-color: #000000;
+}
+
+.preview-landscape {
+  flex: 2;
+  min-height: 0;
+}
+
+.search-view {
+  width: 100%;
+  height: 100%;
+}
+
+.panel {
+  padding: 12px 4px 0;
+}
+
+.panel-landscape {
+  flex: 1;
+  padding: 16px;
+}
+
+.demo-text {
+  font-size: 16px;
+  color: #303133;
+  margin-bottom: 8px;
+}
+
+.matches-text {
+  height: 96px;
+  line-height: 24px;
+  overflow: hidden;
+}
+
+.actions {
+  flex-direction: row;
+  margin-top: 4px;
+}
+
+.actions-landscape {
+  flex-direction: column;
+}
+
+.button {
+  flex: 1;
+  margin: 0 4px;
+  font-size: 16px;
+}
+
+.button-landscape {
+  width: 100%;
+  margin: 5px 0;
+}
+
+.primary {
+  color: #ffffff;
+  background-color: #136918;
+}
+
+.permission-panel {
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.permission-title {
+  font-size: 20px;
+}
+
+.permission-button {
+  margin: 16px 0;
+  color: #ffffff;
+  background-color: #136918;
+}
+</style>

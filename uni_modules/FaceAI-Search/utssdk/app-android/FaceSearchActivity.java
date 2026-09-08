@@ -25,11 +25,15 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageProxy;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import com.ai.face.base.view.camera.CameraXBuilder;
 import com.ai.face.core.utils.FaceAICameraType;
 import com.ai.face.faceSearch.search.FaceSearchEngine;
@@ -51,6 +55,7 @@ import java.util.List;
  * RGB摄像头动作活体检测+1:N 人脸搜索识别。
  * <p>
  * 采用传统 findViewById 方式，适配 HBuilder 云打包环境。
+ * @author FaceAISDK.Service@gmail.com
  */
 public class FaceSearchActivity extends AbsBaseActivity {
     public static final String THRESHOLD_KEY = "THRESHOLD_KEY";
@@ -68,6 +73,7 @@ public class FaceSearchActivity extends AbsBaseActivity {
 
     // UI 控件变量
     private ImageView closeBtn;
+    private ImageView switchButton;
     private GraphicOverlay graphicOverlay;
     private FaceCoverView faceCover;
 
@@ -107,8 +113,10 @@ public class FaceSearchActivity extends AbsBaseActivity {
 
         // 2. 初始化控件
         closeBtn = findViewById(R.id.close);
+        switchButton = findViewById(R.id.switch_button);
         graphicOverlay = findViewById(R.id.graphicOverlay);
         faceCover = findViewById(R.id.face_cover);
+        applySafeAreaInsets();
 
         // 3. 设置点击事件
         closeBtn.setOnClickListener(v -> finish());
@@ -127,6 +135,7 @@ public class FaceSearchActivity extends AbsBaseActivity {
                 .create();
 
         cameraXFragment = FaceCameraXFragment.newInstance(cameraXBuilder);
+        switchButton.setOnClickListener(v -> cameraXFragment.switchCamera());
         getSupportFragmentManager().beginTransaction().replace(R.id.fragment_camerax, cameraXFragment)
                 .commit();
 
@@ -214,15 +223,16 @@ public class FaceSearchActivity extends AbsBaseActivity {
             case NO_MATCHED:
                 setSecondTips(R.string.no_matched_face);
                 if (searchOneTime) {
-					if((System.currentTimeMillis() - searchStartTime) > searchTimeOut){
-		            	FaceResultManager.INSTANCE.sendResult("[]", 0.0f, "");
-		             	FaceSearchActivity.this.finish();			
-					}
-                }else{
-					FaceResultManager.INSTANCE.sendResult("[]", 0.0f, "");
-				}
-			case FACE_ANGLE_NOT_FIT:
-			    setSecondTips(R.string.face_angle_not_fit);
+                    if ((System.currentTimeMillis() - searchStartTime) > searchTimeOut) {
+                        FaceResultManager.INSTANCE.sendResult("[]", 0.0f, "");
+                        FaceSearchActivity.this.finish();
+                    }
+                } else {
+                    FaceResultManager.INSTANCE.sendResult("[]", 0.0f, "");
+                }
+                break;
+            case FACE_ANGLE_NOT_FIT:
+                setSecondTips(R.string.face_angle_not_fit);
                 break;
             case FACE_DIR_EMPTY:
                 setSearchTips(R.string.local_face_database_empty);
@@ -269,10 +279,45 @@ public class FaceSearchActivity extends AbsBaseActivity {
         if (faceCover != null) faceCover.setSecondTipsText(resId);
     }
 
+    private void applySafeAreaInsets() {
+        View root = findViewById(android.R.id.content);
+        ViewCompat.setOnApplyWindowInsetsListener(root, (view, windowInsets) -> {
+            Insets safeInsets = windowInsets.getInsets(
+                    WindowInsetsCompat.Type.systemBars()
+                            | WindowInsetsCompat.Type.displayCutout()
+            );
+            boolean isRtl = ViewCompat.getLayoutDirection(view)
+                    == ViewCompat.LAYOUT_DIRECTION_RTL;
+            int startInset = isRtl ? safeInsets.right : safeInsets.left;
+            int endInset = isRtl ? safeInsets.left : safeInsets.right;
+
+            ViewGroup.MarginLayoutParams closeParams =
+                    (ViewGroup.MarginLayoutParams) closeBtn.getLayoutParams();
+            closeParams.setMarginStart(dp(7) + startInset);
+            closeParams.topMargin = dp(15) + safeInsets.top;
+            closeBtn.setLayoutParams(closeParams);
+
+            ViewGroup.MarginLayoutParams switchParams =
+                    (ViewGroup.MarginLayoutParams) switchButton.getLayoutParams();
+            switchParams.setMarginEnd(dp(15) + endInset);
+            switchParams.topMargin = dp(22) + safeInsets.top;
+            switchButton.setLayoutParams(switchParams);
+            return windowInsets;
+        });
+        ViewCompat.requestApplyInsets(root);
+    }
+
+    private int dp(int value) {
+        return Math.round(value * getResources().getDisplayMetrics().density);
+    }
+
     @Override
     public void onDestroy() {
         super.onDestroy();
         FaceSearchEngine.Companion.getInstance().stopSearchProcess();
+        if (!isChangingConfigurations()) {
+            FaceResultManager.INSTANCE.clear();
+        }
     }
 
     @Override
