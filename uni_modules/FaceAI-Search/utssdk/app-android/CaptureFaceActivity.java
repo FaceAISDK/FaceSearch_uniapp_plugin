@@ -46,6 +46,8 @@ public class CaptureFaceActivity extends AbsBaseActivity {
 
         FrameLayout root = new FrameLayout(this);
         captureFaceView = new CaptureFaceNativeView(this);
+        // UTS 全屏抓拍 API 始终完整显示相机画面，不随圆框显隐切换缩放模式。
+        captureFaceView.setForceFitCenterPreview(true);
         captureFaceView.setFaceCoverVisible(true);
         captureFaceView.setFaceCoverTipsVisible(true);
         captureFaceView.setResultCallback((croppedBase64, silentScore, originBase64) -> {

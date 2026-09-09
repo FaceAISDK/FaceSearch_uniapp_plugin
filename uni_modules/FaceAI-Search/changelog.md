@@ -1,6 +1,10 @@
+## 2026.09.09（2026-09-09）
+- 抓拍组件细节优化
+- 标准模式和兼容模式抓拍组件固定使用 `FILL_CENTER`；全屏 UTS 抓拍 API 固定使用 `FIT_CENTER`，两者不受圆框显隐影响。
+- `FaceCoverView` 提示文字与圆框间隔调整为 `5dp`，隐藏提示文字时圆框边距调整为 `4dp`。
 ## 2026.09.08（2026-09-08）
-- 抓拍兼容模式组件默认显示圆形 `FaceCoverView`；标准模式和兼容模式的圆框始终居中，显示提示时使用短边 `1/13` 边距，隐藏提示时使用 `1px` 边距。
-- 抓拍组件新增 `showFaceCoverTips` 参数，提示文字独立于 `showFaceCover`，显示在圆形框上方并保留 `3dp` 间隔。
+- 抓拍兼容模式组件默认显示圆形 `FaceCoverView`；标准模式和兼容模式的圆框始终居中，显示提示时使用短边 `1/13` 边距，隐藏提示时使用 `4dp` 边距。
+- 抓拍组件新增 `showFaceCoverTips` 参数，提示文字独立于 `showFaceCover`，显示在圆形框上方并保留 `5dp` 间隔。
 - 抓拍组件相机预览统一使用 `FIT_CENTER` 完整居中显示，避免 `FILL_CENTER` 裁切放大人脸；兼容模式演示页同步显示组件回传的实时提示。
 - 全屏抓拍 `CaptureFaceActivity` 的 `linearZoom` 默认值调整为 `0.01`，演示调用同步使用该值。
 - 修复传统 uni-app 云打包时误编译标准模式组件桥接代码，导致 `UniNativeViewElement`、`getAndroidActivity` 和 `bindAndroidView` 无法解析的问题。

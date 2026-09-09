@@ -82,6 +82,8 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
     private var faceCoverVisible = false
     @Volatile
     private var faceCoverTipsVisible = false
+    @Volatile
+    private var forceFitCenterPreview = false
     private var started = false
     private var released = false
     private var sessionId = 0L
@@ -134,8 +136,8 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
         // native-view 中 TextureView 可能因为宿主合成层级而只显示黑色。
         // PERFORMANCE 优先使用 SurfaceView，更适合 CameraX 原生预览嵌入场景。
         previewView.implementationMode = PreviewView.ImplementationMode.PERFORMANCE
-        // 抓拍预览始终保留完整相机画面，避免 FILL_CENTER 裁切后人脸显得过大。
-        previewView.scaleType = PreviewView.ScaleType.FIT_CENTER
+        // 标准模式和兼容模式组件固定铺满预览；全屏 UTS API 会单独强制 FIT_CENTER。
+        previewView.scaleType = PreviewView.ScaleType.FILL_CENTER
         // FaceCoverView 自带的文字与圆形共用 visibility，无法分别控制；清空后改由
         // 独立 TextView 显示过程提示，让 showFaceCover 只负责圆形遮罩。
         faceCoverView.setTipsText(0)
@@ -200,6 +202,15 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
         }
     }
 
+    fun setForceFitCenterPreview(force: Boolean) {
+        forceFitCenterPreview = force
+        runOnMainThread {
+            if (!released) {
+                applyPreviewScaleType()
+            }
+        }
+    }
+
     fun setFaceCoverTipsVisible(visible: Boolean) {
         faceCoverTipsVisible = visible
         runOnMainThread {
@@ -221,7 +232,7 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
         val circleMargin = if (faceCoverTipsVisible) {
             shortEdge / FACE_COVER_MARGIN_WITH_TIPS_DIVISOR
         } else {
-            FACE_COVER_MARGIN_WITHOUT_TIPS_PX
+            dp(FACE_COVER_MARGIN_WITHOUT_TIPS_DP)
         }
 
         // SDK 的 FaceCoverView 会在竖屏时将圆心上移短边的 1/8。把它的布局高度
@@ -235,7 +246,7 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
         faceCoverView.layout(0, 0, contentWidth, coverHeight)
         faceCoverView.setMargin(circleMargin)
 
-        // 提示文本紧贴圆形框上方，并保留 3dp 间隔。
+        // 提示文本紧贴圆形框上方，并保留 5dp 间隔。
         val circleRadius = shortEdge / 2f - circleMargin
         val circleTop = contentHeight / 2f - circleRadius
         val tipsWidth = faceCoverTipsView.measuredWidth
@@ -903,7 +914,11 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
     }
 
     private fun applyPreviewScaleType() {
-        previewView.scaleType = PreviewView.ScaleType.FIT_CENTER
+        previewView.scaleType = if (forceFitCenterPreview) {
+            PreviewView.ScaleType.FIT_CENTER
+        } else {
+            PreviewView.ScaleType.FILL_CENTER
+        }
     }
 
     private fun applyFaceCoverTipsVisibility() {
@@ -951,8 +966,8 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
         const val PREVIEW_START_TIMEOUT_MS = 2500L
         const val AUTO_ROTATION_DEGREES = -1
         const val FACE_COVER_MARGIN_WITH_TIPS_DIVISOR = 13
-        const val FACE_COVER_MARGIN_WITHOUT_TIPS_PX = 1
-        const val FACE_COVER_TIPS_GAP_DP = 3
+        const val FACE_COVER_MARGIN_WITHOUT_TIPS_DP = 4
+        const val FACE_COVER_TIPS_GAP_DP = 5
         const val FACE_COVER_SDK_VERTICAL_OFFSET_DIVISOR = 8
     }
 }

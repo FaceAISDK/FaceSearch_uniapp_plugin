@@ -5,7 +5,7 @@
 		"arm64-v8a"
   ],
 	"dependencies": [
-	"io.github.faceaisdk:Android:2026.09.07.capt3",
+	"io.github.faceaisdk:Android:2026.09.09.capt1",
 	"androidx.camera:camera-core:1.5.2",
 	"androidx.camera:camera-camera2:1.5.2",
 	"androidx.camera:camera-lifecycle:1.5.2",
