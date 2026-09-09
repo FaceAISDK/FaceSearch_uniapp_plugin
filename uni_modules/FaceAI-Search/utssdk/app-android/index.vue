@@ -23,7 +23,7 @@ export default {
     },
     linearZoom: {
       type: Number,
-      default: 0.12
+      default: 0.01
     },
     rotationDegrees: {
       type: Number,

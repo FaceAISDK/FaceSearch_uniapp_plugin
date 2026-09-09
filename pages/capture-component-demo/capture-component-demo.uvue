@@ -17,7 +17,7 @@
             :performance-mode="1"
             :need-liveness-check="true"
             :camera-id="0"
-            :linear-zoom="0.12"
+            :linear-zoom="0.01"
             :rotation-degrees="-1"
             :show-face-cover="false"
             :auto-start="true"

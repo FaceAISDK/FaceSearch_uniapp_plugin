@@ -6,6 +6,10 @@
       :class="useWideLayout ? 'capture-layout-landscape' : 'capture-layout-portrait'"
     >
       <view class="preview-panel">
+        <view class="native-view-hint">
+          <text class="native-view-hint-text">{{ captureTipText }}</text>
+        </view>
+
         <view class="native-view-frame">
           <face-ai-capture-compat
             ref="captureCompatRef"
@@ -13,7 +17,7 @@
             :performanceMode="1"
             :needLivenessCheck="true"
             :cameraId="0"
-            :linearZoom="0.12"
+            :linearZoom="0.01"
             :rotationDegrees="-1"
             :showFaceCover="true"
             :showFaceCoverTips="true"
@@ -101,6 +105,7 @@ const silentScore = ref(0.0)
 const croppedImageSrc = ref("")
 const originImageSrc = ref("")
 const statusText = ref("正在检查相机权限…")
+const captureTipText = ref("请摆正头部并将人脸置于取景框内")
 const useWideLayout = ref(false)
 const captureReady = ref(false)
 const captureStarted = ref(false)
@@ -178,6 +183,7 @@ function onCaptureReady() {
   captureButtonText.value = "抓拍中…"
   currentCameraId.value = 0
   statusText.value = "兼容模式组件已启动"
+  captureTipText.value = "请摆正头部并将人脸置于取景框内"
 }
 
 function onCaptureResult(result: Map<string, any>) {
@@ -189,10 +195,12 @@ function onCaptureResult(result: Map<string, any>) {
   originImageSrc.value = toImageSource(originBase64)
   captureInProgress.value = false
   captureButtonText.value = "再次抓拍"
+  captureTipText.value = "已暂停检测，点击“再次抓拍”调用 retry()"
 }
 
 function onCaptureTips(tips: Map<string, any>) {
   const message = mapString(tips, "message")
+  captureTipText.value = message
   statusText.value = `提示 ${mapNumber(tips, "code")}：${message}`
 }
 
@@ -200,10 +208,12 @@ function onCaptureError(error: Map<string, any>) {
   const code = mapString(error, "code")
   const message = mapString(error, "message")
   if (code == "CAMERA_PERMISSION_REQUIRED") {
+    captureTipText.value = message
     applyCameraPermissionDenied(false, "相机权限已失效，请重新授权")
     return
   }
 
+  captureTipText.value = message
   statusText.value = `错误 ${code}：${message}`
   if (code != "CAMERA_NOT_AVAILABLE" && code != "CAMERA_SWITCH_FAILED") {
     captureInProgress.value = false
@@ -236,6 +246,7 @@ function startOrRetryCapture() {
   }
   captureInProgress.value = true
   captureButtonText.value = "抓拍中…"
+  captureTipText.value = "请摆正头部并将人脸置于取景框内"
 }
 
 function toggleCamera() {
@@ -371,6 +382,20 @@ onResize((options: OnResizeOptions) => {
   flex: 1;
   min-width: 0;
   min-height: 0;
+}
+
+.native-view-hint {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 12px;
+  background-color: #1677ff;
+}
+
+.native-view-hint-text {
+  color: #ffffff;
+  font-size: 17px;
+  line-height: 22px;
+  text-align: center;
 }
 
 .native-view-frame {

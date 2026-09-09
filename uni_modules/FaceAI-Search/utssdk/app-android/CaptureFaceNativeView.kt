@@ -76,7 +76,7 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
     private var needLivenessCheck = true
     @Volatile
     private var cameraId = CameraSelector.LENS_FACING_FRONT
-    private var linearZoom = 0.12f
+    private var linearZoom = 0.01f
     private var rotationDegrees = AUTO_ROTATION_DEGREES
     @Volatile
     private var faceCoverVisible = false
@@ -134,8 +134,8 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
         // native-view 中 TextureView 可能因为宿主合成层级而只显示黑色。
         // PERFORMANCE 优先使用 SurfaceView，更适合 CameraX 原生预览嵌入场景。
         previewView.implementationMode = PreviewView.ImplementationMode.PERFORMANCE
-        // 居中裁剪相机画面以铺满组件，避免宽高比不一致时出现上下黑边。
-        previewView.scaleType = PreviewView.ScaleType.FILL_CENTER
+        // 抓拍预览始终保留完整相机画面，避免 FILL_CENTER 裁切后人脸显得过大。
+        previewView.scaleType = PreviewView.ScaleType.FIT_CENTER
         // FaceCoverView 自带的文字与圆形共用 visibility，无法分别控制；清空后改由
         // 独立 TextView 显示过程提示，让 showFaceCover 只负责圆形遮罩。
         faceCoverView.setTipsText(0)
@@ -195,6 +195,7 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
         runOnMainThread {
             if (!released) {
                 applyFaceCoverVisibility()
+                applyPreviewScaleType()
             }
         }
     }
@@ -204,6 +205,7 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
         runOnMainThread {
             if (!released) {
                 applyFaceCoverTipsVisibility()
+                requestLayout()
             }
         }
     }
@@ -216,25 +218,31 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
         if (contentWidth <= 0 || contentHeight <= 0) return
 
         val shortEdge = minOf(contentWidth, contentHeight)
-        val circleMargin = shortEdge / FACE_COVER_MARGIN_DIVISOR
+        val circleMargin = if (faceCoverTipsVisible) {
+            shortEdge / FACE_COVER_MARGIN_WITH_TIPS_DIVISOR
+        } else {
+            FACE_COVER_MARGIN_WITHOUT_TIPS_PX
+        }
 
-        // SDK 的 FaceCoverView 会在竖屏时将圆心上移一个默认 margin。把它的布局
-        // 高度向下扩展两个 margin，正好抵消该偏移，同时保持遮罩覆盖整个可见区域。
+        // SDK 的 FaceCoverView 会在竖屏时将圆心上移短边的 1/8。把它的布局高度
+        // 向下扩展两倍该偏移量，抵消上移，同时保持遮罩覆盖整个可见区域。
+        val sdkVerticalOffset = shortEdge / FACE_COVER_SDK_VERTICAL_OFFSET_DIVISOR
         val coverHeight = if (contentWidth <= contentHeight) {
-            contentHeight + circleMargin * 2
+            contentHeight + sdkVerticalOffset * 2
         } else {
             contentHeight
         }
         faceCoverView.layout(0, 0, contentWidth, coverHeight)
         faceCoverView.setMargin(circleMargin)
 
-        // 文本框在组件顶部与圆形上沿之间垂直居中。
+        // 提示文本紧贴圆形框上方，并保留 3dp 间隔。
         val circleRadius = shortEdge / 2f - circleMargin
         val circleTop = contentHeight / 2f - circleRadius
         val tipsWidth = faceCoverTipsView.measuredWidth
         val tipsHeight = faceCoverTipsView.measuredHeight
         val tipsLeft = (contentWidth - tipsWidth) / 2
-        val tipsTop = ((circleTop - tipsHeight) / 2f).toInt().coerceAtLeast(0)
+        val tipsBottom = (circleTop - dp(FACE_COVER_TIPS_GAP_DP)).toInt()
+        val tipsTop = (tipsBottom - tipsHeight).coerceAtLeast(0)
         faceCoverTipsView.layout(
             tipsLeft,
             tipsTop,
@@ -252,7 +260,7 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
         performanceMode: Int = CaptureFaceDispose.PERFORMANCE_MODE_FAST,
         needLivenessCheck: Boolean = true,
         cameraId: Int = CameraSelector.LENS_FACING_FRONT,
-        linearZoom: Float = 0.12f,
+        linearZoom: Float = 0.01f,
         rotationDegrees: Int = AUTO_ROTATION_DEGREES
     ) {
         if (released) {
@@ -894,6 +902,10 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
         faceCoverView.visibility = if (faceCoverVisible) View.VISIBLE else View.GONE
     }
 
+    private fun applyPreviewScaleType() {
+        previewView.scaleType = PreviewView.ScaleType.FIT_CENTER
+    }
+
     private fun applyFaceCoverTipsVisibility() {
         faceCoverTipsView.visibility = if (faceCoverTipsVisible) View.VISIBLE else View.GONE
     }
@@ -938,6 +950,9 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
         const val TAG = "CaptureFaceNativeView"
         const val PREVIEW_START_TIMEOUT_MS = 2500L
         const val AUTO_ROTATION_DEGREES = -1
-        const val FACE_COVER_MARGIN_DIVISOR = 13
+        const val FACE_COVER_MARGIN_WITH_TIPS_DIVISOR = 13
+        const val FACE_COVER_MARGIN_WITHOUT_TIPS_PX = 1
+        const val FACE_COVER_TIPS_GAP_DP = 3
+        const val FACE_COVER_SDK_VERTICAL_OFFSET_DIVISOR = 8
     }
 }

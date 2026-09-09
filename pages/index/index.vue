@@ -89,7 +89,7 @@
 					1,
 					true,
 					0,
-					0.12,
+					0.01,
 					-1,
 					(result) => {
 						this.captureFaceCount++
