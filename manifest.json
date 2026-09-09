@@ -32,10 +32,10 @@
 		"distribute": {
 			"icons": {
 				"android": {
-					"hdpi": "",
-					"xhdpi": "",
-					"xxhdpi": "",
-					"xxxhdpi": ""
+					"hdpi": "/static/app-icons/app-icon-hdpi.png",
+					"xhdpi": "/static/app-icons/app-icon-xhdpi.png",
+					"xxhdpi": "/static/app-icons/app-icon-xxhdpi.png",
+					"xxxhdpi": "/static/app-icons/app-icon-xxxhdpi.png"
 				}
 			}
 		}
@@ -44,10 +44,10 @@
 		"distribute": {
 			"modules": {},
 			"icons": {
-				"hdpi": "",
-				"xhdpi": "",
-				"xxhdpi": "",
-				"xxxhdpi": ""
+				"hdpi": "/static/app-icons/app-icon-hdpi.png",
+				"xhdpi": "/static/app-icons/app-icon-xhdpi.png",
+				"xxhdpi": "/static/app-icons/app-icon-xxhdpi.png",
+				"xxxhdpi": "/static/app-icons/app-icon-xxxhdpi.png"
 			},
 			"debuggable": true,
 			"splashScreens": {
