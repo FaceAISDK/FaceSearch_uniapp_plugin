@@ -2,8 +2,8 @@
 	"name": "人脸搜索",
 	"appid": "__UNI__B90AA89",
 	"description": "相机人脸搜索识别，图片人脸搜索，以及活体检测Beta",
-	"versionName": "2026.09.07",
-	"versionCode": "20260907",
+	"versionName": "2026.09.09",
+	"versionCode": "20260909",
 	"uni-app-x": {},
 	/* 快应用特有相关 */
 	"quickapp": {},
@@ -32,10 +32,10 @@
 		"distribute": {
 			"icons": {
 				"android": {
-					"hdpi": "",
-					"xhdpi": "",
-					"xxhdpi": "",
-					"xxxhdpi": ""
+					"hdpi": "/static/app-icons/app-icon-hdpi.png",
+					"xhdpi": "/static/app-icons/app-icon-xhdpi.png",
+					"xxhdpi": "/static/app-icons/app-icon-xxhdpi.png",
+					"xxxhdpi": "/static/app-icons/app-icon-xxxhdpi.png"
 				}
 			}
 		}
@@ -44,10 +44,10 @@
 		"distribute": {
 			"modules": {},
 			"icons": {
-				"hdpi": "",
-				"xhdpi": "",
-				"xxhdpi": "",
-				"xxxhdpi": ""
+				"hdpi": "/static/app-icons/app-icon-hdpi.png",
+				"xhdpi": "/static/app-icons/app-icon-xhdpi.png",
+				"xxhdpi": "/static/app-icons/app-icon-xxhdpi.png",
+				"xxxhdpi": "/static/app-icons/app-icon-xxxhdpi.png"
 			},
 			"debuggable": true,
 			"splashScreens": {

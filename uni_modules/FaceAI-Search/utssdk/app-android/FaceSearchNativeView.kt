@@ -164,7 +164,7 @@ class FaceSearchNativeView(context: Context) : FrameLayout(context) {
         if (width <= 0 || height <= 0) return
 
         // 与全屏 UTS API 保持相同圆框比例：竖屏短边留 1/8，横屏留 1/9。
-        val marginDivisor = if (height > width) 8 else 7
+        val marginDivisor = if (height > width) 9 else 9
         faceCoverView.setMargin(minOf(width, height) / marginDivisor) //这个margin应该是距离更短边的Margin
 
         if (height > width) {

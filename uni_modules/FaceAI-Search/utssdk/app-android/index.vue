@@ -23,13 +23,17 @@ export default {
     },
     linearZoom: {
       type: Number,
-      default: 0.12
+      default: 0.01
     },
     rotationDegrees: {
       type: Number,
       default: -1
     },
     showFaceCover: {
+      type: Boolean,
+      default: true
+    },
+    showFaceCoverTips: {
       type: Boolean,
       default: false
     },
@@ -41,6 +45,7 @@ export default {
   NVLoad(): CaptureFaceNativeView {
     const captureView = new CaptureFaceNativeView(this.$androidContext!)
     captureView.setFaceCoverVisible(this.showFaceCover)
+    captureView.setFaceCoverTipsVisible(this.showFaceCoverTips)
     captureView.setResultCallback((
       croppedBase64: string,
       silentScore: number,
@@ -86,6 +91,7 @@ export default {
   methods: {
     start() {
       this.$el?.setFaceCoverVisible(this.showFaceCover)
+      this.$el?.setFaceCoverTipsVisible(this.showFaceCoverTips)
       this.$el?.start(
         this.performanceMode.toInt(),
         this.needLivenessCheck,

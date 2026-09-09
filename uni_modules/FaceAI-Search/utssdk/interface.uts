@@ -59,7 +59,7 @@ export type FaceSearchCameraChange = {
  * @param performanceMode -1 无限制、0 简单、1 快速、2 精确
  * @param needLivenessCheck 是否计算静默活体分数
  * @param cameraId 0 前置、1 后置；不存在时自动降级到可用摄像头
- * @param linearZoom 线性变焦，范围 0~1
+ * @param linearZoom 线性变焦，范围 0~1；不建议传入过大值，默认推荐 0.01
  * @param rotationDegrees 画面旋转角度，-1 跟随当前显示方向，或固定为 0/90/180/270
  */
 export type CaptureFaceByCamera = (
