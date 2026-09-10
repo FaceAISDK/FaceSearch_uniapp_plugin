@@ -30,7 +30,7 @@ public class CaptureFaceActivity extends AbsBaseActivity {
 
     private CaptureFaceNativeView captureFaceView;
     private int performanceMode = CaptureFaceDispose.PERFORMANCE_MODE_FAST;
-    private boolean needLivenessCheck = true;
+    private boolean needLivenessCheck = false;
     private int cameraId = 0;
     private float linearZoom = 0.01f;
     private int rotationDegrees = -1;

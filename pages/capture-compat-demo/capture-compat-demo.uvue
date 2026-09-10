@@ -15,7 +15,7 @@
             ref="captureCompatRef"
             class="capture-view"
             :performanceMode="1"
-            :needLivenessCheck="true"
+            :needLivenessCheck="false"
             :cameraId="0"
             :linearZoom="0.01"
             :rotationDegrees="-1"

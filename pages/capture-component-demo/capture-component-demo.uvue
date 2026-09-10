@@ -15,7 +15,7 @@
             ref="captureComponentRef"
             class="capture-view"
             :performance-mode="1"
-            :need-liveness-check="true"
+            :need-liveness-check="false"
             :camera-id="0"
             :linear-zoom="0.01"
             :rotation-degrees="-1"

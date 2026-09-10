@@ -887,7 +887,7 @@
     &lt;face-ai-capture-compat
       ref="captureCompat"
       :performanceMode="1"
-      :needLivenessCheck="true"
+      :needLivenessCheck="false"
       :cameraId="0"
       :linearZoom="0.01"
       :rotationDegrees="-1"
@@ -975,7 +975,7 @@ export default {
       &lt;face-ai-capture-compat
         ref="captureCompat"
         :performanceMode="1"
-        :needLivenessCheck="true"
+        :needLivenessCheck="false"
         :cameraId="0"
         :linearZoom="0.01"
         :rotationDegrees="-1"
@@ -1259,7 +1259,7 @@ export default {
             <thead><tr><th>属性</th><th>类型 / 默认值</th><th>说明</th><th>建议</th></tr></thead>
             <tbody>
               <tr><td><code>performanceMode</code></td><td>Number / <code>1</code></td><td><code>-1</code> 无限制、<code>0</code> 简单、<code>1</code> 快速、<code>2</code> 精确。</td><td><span class="badge">默认 1</span></td></tr>
-              <tr><td><code>needLivenessCheck</code></td><td>Boolean / <code>true</code></td><td>是否计算静默活体分数。</td><td>身份场景建议开启</td></tr>
+              <tr><td><code>needLivenessCheck</code></td><td>Boolean / <code>false</code></td><td>是否计算静默活体分数，抓拍组件默认关闭。</td><td>需要时显式开启</td></tr>
               <tr><td><code>cameraId</code></td><td>Number / <code>0</code></td><td><code>0</code> 前置，<code>1</code> 后置；启动时不存在会尝试降级到可用摄像头。</td><td>自拍默认 0</td></tr>
               <tr><td><code>linearZoom</code></td><td>Number / <code>0.01</code></td><td>线性变焦，原生层会限制到 <code>0–1</code>；不建议传入过大的值。</td><td>先保持默认</td></tr>
               <tr><td><code>rotationDegrees</code></td><td>Number / <code>-1</code></td><td><code>-1</code> 跟随显示方向；也可固定为 <code>0/90/180/270</code>。</td><td><span class="badge">推荐 -1</span></td></tr>
