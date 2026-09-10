@@ -15,7 +15,7 @@ export default {
     },
     needLivenessCheck: {
       type: Boolean,
-      default: true
+      default: false
     },
     cameraId: {
       type: Number,

@@ -73,7 +73,7 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
     private var cameraChangedCallback: ((Int) -> Unit)? = null
 
     private var performanceMode = CaptureFaceDispose.PERFORMANCE_MODE_FAST
-    private var needLivenessCheck = true
+    private var needLivenessCheck = false
     @Volatile
     private var cameraId = CameraSelector.LENS_FACING_FRONT
     private var linearZoom = 0.01f
@@ -269,7 +269,7 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
     @JvmOverloads
     fun start(
         performanceMode: Int = CaptureFaceDispose.PERFORMANCE_MODE_FAST,
-        needLivenessCheck: Boolean = true,
+        needLivenessCheck: Boolean = false,
         cameraId: Int = CameraSelector.LENS_FACING_FRONT,
         linearZoom: Float = 0.01f,
         rotationDegrees: Int = AUTO_ROTATION_DEGREES

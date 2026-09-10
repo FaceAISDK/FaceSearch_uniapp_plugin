@@ -87,7 +87,7 @@
 			captureFaceByCameraDemo: function () {
 				captureFaceByCamera(
 					1,
-					true,
+					false,
 					0,
 					0.01,
 					-1,

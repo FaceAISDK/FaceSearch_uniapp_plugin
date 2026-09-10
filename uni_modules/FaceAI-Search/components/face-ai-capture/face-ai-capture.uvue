@@ -24,7 +24,7 @@ type CaptureFaceProps = {
 
 const props = withDefaults(defineProps<CaptureFaceProps>(), {
   performanceMode: 1,
-  needLivenessCheck: true,
+  needLivenessCheck: false,
   cameraId: 0,
   linearZoom: 0.01,
   rotationDegrees: -1,
