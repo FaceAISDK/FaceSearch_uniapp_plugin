@@ -620,9 +620,9 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
             }
 
             observePreviewStream(lifecycleOwner, currentSession, analyzerGeneration)
-            if (notifySwitch || actualCameraId != requestedCameraId) {
-                notifyCameraChanged(actualCameraId)
-            }
+            // 首次初始化也回传最终绑定的镜头，调用方可确认传入的 cameraId 是否生效，
+            // 或设备缺少目标镜头时是否发生了自动降级。
+            notifyCameraChanged(actualCameraId)
             return true
         } catch (e: LinkageError) {
             newImageAnalysis.clearAnalyzer()

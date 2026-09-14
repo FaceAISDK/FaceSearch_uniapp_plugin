@@ -47,7 +47,7 @@
         </view>
         <text class="status-text">抓拍次数：{{ captureCount }}</text>
         <text class="status-text">静默活体分数：{{ silentScore }}</text>
-        <text class="status-text">当前相机：{{ currentCameraId == 0 ? '前置' : '后置' }}</text>
+        <text class="status-text">当前相机：{{ currentCameraId == 0 ? '前置' : (currentCameraId == 1 ? '后置' : '初始化中') }}</text>
         <view class="control-row">
           <button
             class="control-button control-button-primary"
@@ -111,7 +111,7 @@ const captureReady = ref(false)
 const captureStarted = ref(false)
 const captureInProgress = ref(false)
 const captureButtonText = ref("开始抓拍")
-const currentCameraId = ref(0)
+const currentCameraId = ref(-1)
 let pageReady = false
 
 function resetCaptureSessionState() {
@@ -119,7 +119,7 @@ function resetCaptureSessionState() {
   captureStarted.value = false
   captureInProgress.value = false
   captureButtonText.value = "开始抓拍"
-  currentCameraId.value = 0
+  currentCameraId.value = -1
   croppedImageSrc.value = ""
   originImageSrc.value = ""
 }
@@ -181,7 +181,6 @@ function onCaptureReady() {
   captureStarted.value = true
   captureInProgress.value = true
   captureButtonText.value = "抓拍中…"
-  currentCameraId.value = 0
   statusText.value = "兼容模式组件已启动"
   captureTipText.value = "请摆正头部并将人脸置于取景框内"
 }
@@ -229,7 +228,7 @@ function onCaptureError(error: Map<string, any>) {
 function onCameraChange(result: Map<string, any>) {
   const cameraId = mapNumber(result, "cameraId")
   currentCameraId.value = cameraId
-  statusText.value = `已切换到${cameraId == 0 ? '前置' : '后置'}相机`
+  statusText.value = `当前使用${cameraId == 0 ? '前置' : '后置'}相机`
 }
 
 function startOrRetryCapture() {
