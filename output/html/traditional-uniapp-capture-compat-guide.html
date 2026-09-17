@@ -1365,7 +1365,7 @@ export default {
             <tbody>
               <tr><td><strong>组件内部</strong></td><td>相同参数重复 <code>start()</code>，导致 CameraX 频繁解绑、重绑。</td><td>原生层已将相同参数的重复启动改为幂等；成功结果后应调用 <code>retry()</code>，不要用 <code>start()</code> 代替。</td></tr>
               <tr><td><strong>组件内部</strong></td><td>原生 View 临时 detach 后只停止不恢复，表现为返回页面后黑屏。</td><td>组件会记录活动会话，并在重新 attach 后按原参数恢复。</td></tr>
-              <tr><td><strong>组件内部</strong></td><td>SDK 忙时仍逐帧转 Bitmap、提示/错误高频跨桥、结果 Bitmap 未及时回收，造成 GC 抖动甚至内存不足。</td><td>组件现在把送检频率限制为约每 333ms 一帧，临时帧最多保留 2 秒，并合并提示、去重连续错误、及时回收结果 Bitmap。</td></tr>
+              <tr><td><strong>组件内部</strong></td><td>SDK 忙时仍逐帧转 Bitmap、提示/错误高频跨桥、结果 Bitmap 未及时回收，造成 GC 抖动甚至内存不足。</td><td>组件现在把送检频率限制为最高约 10fps（每 100ms 一帧），既满足 SDK 在 500ms 内至少采集 3 帧的姿态稳定判定，也会将临时帧最多保留 2 秒，并合并提示、去重连续错误、及时回收结果 Bitmap。</td></tr>
               <tr><td><strong>组件内部</strong></td><td>连续切换相机或多个组件同时抢占 CameraX / 人脸检测器。</td><td>切换请求会合并；同一进程只允许一个活动抓拍实例，旧实例收到 <code>CAPTURE_SESSION_REPLACED</code>。</td></tr>
               <tr><td><strong>调用侧</strong></td><td><code>v-if</code> 高频切换、定时反复创建销毁组件、页面未卸载又创建第二个实例。</td><td>一个页面只保留一个实例；权限通过后再挂载；普通业务状态变化不要重建组件。</td></tr>
               <tr><td><strong>调用侧</strong></td><td>连续点击切换/重试，或在 <code>ready</code> 前调用方法。</td><td>按钮增加 <code>capturing</code> / <code>cameraSwitching</code> 锁，在 <code>result</code>、<code>camera-change</code> 或 <code>error</code> 后解除。</td></tr>

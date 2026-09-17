@@ -1329,7 +1329,11 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
         const val PREVIEW_START_TIMEOUT_MS = 2500L
         const val SDK_START_SETTLE_MS = 700L
         const val SDK_RETRY_SETTLE_MS = 120L
-        const val FRAME_ANALYSIS_INTERVAL_MS = 333L
+        // CaptureFaceDispose 会在 500ms 的滑动窗口内累计至少 3 帧，用于判断
+        // 人脸位置和头部姿态是否稳定。间隔达到 250ms 以上时窗口内最多只有
+        // 2 帧，会一直返回 HEAD_CENTER / FACE_UNSTABLE，无法进入抓拍完成回调。
+        // 100ms（最高约 10fps）既满足稳定判定，也避免对每个相机帧都做 Bitmap 转换。
+        const val FRAME_ANALYSIS_INTERVAL_MS = 100L
         const val FRAME_PROCESS_TIMEOUT_MS = 10_000L
         const val FRAME_BITMAP_RETENTION_MS = 2_000L
         const val TIPS_DISPATCH_INTERVAL_MS = 250L
