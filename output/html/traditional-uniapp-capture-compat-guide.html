@@ -908,7 +908,8 @@
 export default {
   methods: {
     onCaptureReady() {},
-    onCaptureResult(payload) { console.log(payload) },
+    // payload 含两张大图 Base64，不要直接 console.log(payload)。
+    onCaptureResult(payload) { console.log('人脸抓拍完成') },
     onCaptureTips(payload) { console.log(payload) },
     onCaptureError(payload) { console.error(payload) },
     onCameraChange(payload) { console.log(payload) }
@@ -1003,8 +1004,8 @@ export default {
         &lt;button class="button primary" :disabled="!ready || capturing" @tap="retryCapture"&gt;
           {{ capturing ? '抓拍中…' : '再次抓拍' }}
         &lt;/button&gt;
-        &lt;button class="button secondary" :disabled="!ready" @tap="toggleCamera"&gt;
-          切换相机
+        &lt;button class="button secondary" :disabled="!ready || cameraSwitching" @tap="toggleCamera"&gt;
+          {{ cameraSwitching ? '切换中…' : '切换相机' }}
         &lt;/button&gt;
       &lt;/view&gt;
     &lt;/view&gt;
@@ -1035,6 +1036,7 @@ export default {
       permissionPermanentlyDenied: false,
       ready: false,
       capturing: false,
+      cameraSwitching: false,
       captureCount: 0,
       silentScore: 0,
       currentCameraId: 0,
@@ -1059,6 +1061,7 @@ export default {
   onUnload() {
     const capture = this.$refs.captureCompat
     if (capture) capture.stop()
+    this.cameraSwitching = false
   },
 
   methods: {
@@ -1141,6 +1144,13 @@ export default {
       const message = this.readField(payload, 'message') || ''
       this.statusText = '错误 ' + code + '：' + message
       this.capturing = false
+      this.cameraSwitching = false
+
+      // 单帧错误会由组件自动跳过/复位，不要销毁并重建组件。
+      if (code === 'FRAME_PROCESS_FAILED' || code === 'FRAME_PROCESS_TIMEOUT') {
+        this.capturing = true
+        return
+      }
 
       if (code === 'CAMERA_PERMISSION_REQUIRED') {
         this.cameraGranted = false
@@ -1149,6 +1159,7 @@ export default {
 
     onCameraChange(payload) {
       this.currentCameraId = Number(this.readField(payload, 'cameraId') || 0)
+      this.cameraSwitching = false
       this.statusText = this.currentCameraId === 0 ? '已切换到前置相机' : '已切换到后置相机'
     },
 
@@ -1162,7 +1173,8 @@ export default {
 
     toggleCamera() {
       const capture = this.$refs.captureCompat
-      if (!capture || !this.ready) return
+      if (!capture || !this.ready || this.cameraSwitching) return
+      this.cameraSwitching = true
       capture.toggleCamera()
       this.statusText = '正在切换相机…'
     }
@@ -1346,6 +1358,27 @@ export default {
           <li>Base64 体积较大，展示或提交完成后及时清空；不要写入日志、URL 或长期缓存。</li>
         </ul>
 
+        <h3>“卡死”原因如何区分</h3>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>归属</th><th>典型现象与原因</th><th>当前组件处理 / 接入要求</th></tr></thead>
+            <tbody>
+              <tr><td><strong>组件内部</strong></td><td>相同参数重复 <code>start()</code>，导致 CameraX 频繁解绑、重绑。</td><td>原生层已将相同参数的重复启动改为幂等；成功结果后应调用 <code>retry()</code>，不要用 <code>start()</code> 代替。</td></tr>
+              <tr><td><strong>组件内部</strong></td><td>原生 View 临时 detach 后只停止不恢复，表现为返回页面后黑屏。</td><td>组件会记录活动会话，并在重新 attach 后按原参数恢复。</td></tr>
+              <tr><td><strong>组件内部</strong></td><td>SDK 忙时仍逐帧转 Bitmap、提示/错误高频跨桥、结果 Bitmap 未及时回收，造成 GC 抖动甚至内存不足。</td><td>组件现在把送检频率限制为约每 333ms 一帧，临时帧最多保留 2 秒，并合并提示、去重连续错误、及时回收结果 Bitmap。</td></tr>
+              <tr><td><strong>组件内部</strong></td><td>连续切换相机或多个组件同时抢占 CameraX / 人脸检测器。</td><td>切换请求会合并；同一进程只允许一个活动抓拍实例，旧实例收到 <code>CAPTURE_SESSION_REPLACED</code>。</td></tr>
+              <tr><td><strong>调用侧</strong></td><td><code>v-if</code> 高频切换、定时反复创建销毁组件、页面未卸载又创建第二个实例。</td><td>一个页面只保留一个实例；权限通过后再挂载；普通业务状态变化不要重建组件。</td></tr>
+              <tr><td><strong>调用侧</strong></td><td>连续点击切换/重试，或在 <code>ready</code> 前调用方法。</td><td>按钮增加 <code>capturing</code> / <code>cameraSwitching</code> 锁，在 <code>result</code>、<code>camera-change</code> 或 <code>error</code> 后解除。</td></tr>
+              <tr><td><strong>调用侧</strong></td><td>完整打印、深拷贝或长期响应式保存两张 Base64 图片，JS/原生桥和 UI 线程内存暴涨。</td><td>不要输出完整结果对象；图片用完即清空，上传时避免额外复制，不放 Pinia/Vuex 长期保存。</td></tr>
+              <tr><td><strong>调用侧</strong></td><td>其他相机/扫码插件同时占用摄像头，或 CameraX 版本不一致。</td><td>进入抓拍页前先关闭其他相机会话，并统一 CameraX <code>1.5.2</code> 依赖。</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout warning">
+          Android 主线程长时间无响应才是真正的 ANR；预览黑屏但按钮仍可点击，通常是相机占用、生命周期或绑定失败。接入方应监听 <code>error</code>，不要用无限定时重启掩盖错误。
+        </div>
+
         <h3>常见错误码</h3>
         <div class="table-scroll">
           <table>
@@ -1359,7 +1392,10 @@ export default {
               <tr><td><code>CAMERA_BIND_FAILED</code></td><td>相机绑定失败；检查权限、生命周期、相机占用和依赖。</td></tr>
               <tr><td><code>CAMERA_SWITCH_FAILED</code></td><td>切换相机失败；保持当前摄像头并提示用户。</td></tr>
               <tr><td><code>CAMERA_PREVIEW_NOT_STREAMING</code></td><td>相机已打开但预览未出流；插件会先自动尝试兼容预览模式。</td></tr>
-              <tr><td><code>FRAME_PROCESS_FAILED</code></td><td>相机帧处理异常。</td></tr>
+              <tr><td><code>SDK_INIT_FAILED</code></td><td>人脸抓拍 SDK 初始化失败；停止当前会话，记录错误信息并允许用户手动重试。</td></tr>
+              <tr><td><code>CAPTURE_SESSION_REPLACED</code></td><td>另一个抓拍组件实例接管了相机；检查页面是否重复挂载组件。</td></tr>
+              <tr><td><code>FRAME_PROCESS_FAILED</code></td><td>单帧处理异常；组件会继续处理后续帧，不要因此销毁重建组件。</td></tr>
+              <tr><td><code>FRAME_PROCESS_TIMEOUT</code></td><td>连续 10 秒没有收到 SDK 检测反馈；组件会重置检测状态，调用方应记录设备型号和错误。</td></tr>
               <tr><td><code>BITMAP_ENCODE_FAILED</code></td><td>结果图片转 Base64 失败；允许用户重新抓拍。</td></tr>
               <tr><td><code>CAPTURE_RETRY_FAILED</code></td><td>下一轮抓拍状态重置失败，可停止后重新 <code>start()</code>。</td></tr>
               <tr><td><code>VIEW_RELEASED</code></td><td>组件已经释放，不应继续调用实例方法。</td></tr>
@@ -1388,6 +1424,18 @@ export default {
             <summary>组件显示黑屏或相机不出画面</summary>
             <div>
               <p>先检查相机权限、其他页面/SDK 是否占用相机、设备是否有可用摄像头。插件检测到预览未开始时会自动从 Performance 预览切到 Compatible 预览；仍失败会回调 <code>CAMERA_PREVIEW_NOT_STREAMING</code>。</p>
+            </div>
+          </details>
+
+          <details>
+            <summary>页面像“卡死”，如何快速判断是谁的问题</summary>
+            <div>
+              <ol>
+                <li>按钮、返回手势也无响应：优先按 ANR 排查主线程，检查是否打印/复制完整 Base64、同步上传或频繁创建销毁组件。</li>
+                <li>页面能操作但预览黑屏：检查 <code>error</code> 事件、相机权限、其他相机插件占用以及 <code>CAMERA_PREVIEW_NOT_STREAMING</code>。</li>
+                <li>预览正常但没有结果：确认上一轮结果后调用了 <code>retry()</code>，并观察 <code>tips</code> 是否仍在更新。</li>
+                <li>切换时短暂静止：等待 <code>camera-change</code> 或 <code>error</code> 后再允许下一次点击，不要用循环定时器调用切换。</li>
+              </ol>
             </div>
           </details>
 
@@ -1445,6 +1493,9 @@ export default {
           <li>首次进入、拒绝权限、永久拒绝、从系统设置返回四条路径均可用。</li>
           <li>收到 <code>result</code> 后能够展示/处理两张图片和静默活体分数。</li>
           <li>点击“再次抓拍”会调用 <code>retry()</code>，不会重复并发调用。</li>
+          <li>切换按钮在等待 <code>camera-change</code> / <code>error</code> 时不可再次点击。</li>
+          <li>页面只挂载一个抓拍实例，其他相机或扫码功能在进入本页前已停止。</li>
+          <li>结果回调不会输出完整 Base64，也不会将图片长期放入全局响应式状态。</li>
           <li>前置/后置切换成功；只有单摄像头时能够妥善处理错误事件。</li>
           <li>退出页面后相机被释放，再次进入仍能正常启动。</li>
           <li>前台/后台切换、横竖屏、手机/平板布局均已在真实目标设备验证。</li>
@@ -1460,6 +1511,9 @@ export default {
           <li><strong>插件源码：</strong><code>uni_modules/FaceAI-Search/utssdk/app-android/index.vue</code>（组件属性、事件、方法）</li>
           <li><strong>插件源码：</strong><code>CaptureFaceNativeView.kt</code>（相机生命周期、抓拍暂停/重试、错误码）</li>
           <li><a href="https://doc.dcloud.net.cn/uni-app-x/plugin/uts-component-compatible.html">DCloud：UTS 组件 uni-app 兼容模式开发</a></li>
+          <li><a href="https://developer.android.com/media/camera/camerax/analyze">Android：CameraX 图像分析</a></li>
+          <li><a href="https://developer.android.com/media/camera/camerax/architecture">Android：CameraX 生命周期与架构</a></li>
+          <li><a href="https://developer.android.com/topic/performance/views/vitals/anr-views">Android：ANR 诊断</a></li>
           <li><a href="https://doc.dcloud.net.cn/uni-app-x/plugin/uts-component.html">DCloud：UTS 组件开发模式概述</a></li>
           <li><a href="https://uniapp.dcloud.net.cn/tutorial/app-permission-android.html">DCloud：Android 平台权限配置</a></li>
           <li><a href="https://uniapp.dcloud.net.cn/api/system/openappauthorizesetting.html">DCloud：uni.openAppAuthorizeSetting</a></li>
@@ -1470,7 +1524,7 @@ export default {
   </div>
 
   <footer class="footer">
-    FaceAI Search 抓拍兼容模式接入指引 · 基于插件 2026.09.08 · 文档生成日期 2026-09-08
+    FaceAI Search 抓拍兼容模式接入指引 · 插件版本 4.0.0 · 文档更新日期 2026-09-17
   </footer>
 
   <script>

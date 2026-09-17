@@ -56,9 +56,9 @@
           >{{ captureButtonText }}</button>
           <button
             class="control-button control-button-secondary"
-            :disabled="!captureReady || !captureStarted"
+            :disabled="!captureReady || !captureStarted || cameraSwitching"
             @tap="toggleCamera"
-          >切换前后相机</button>
+          >{{ cameraSwitching ? '切换中…' : '切换前后相机' }}</button>
         </view>
       </view>
     </view>
@@ -110,6 +110,7 @@ const useWideLayout = ref(false)
 const captureReady = ref(false)
 const captureStarted = ref(false)
 const captureInProgress = ref(false)
+const cameraSwitching = ref(false)
 const captureButtonText = ref("开始抓拍")
 const currentCameraId = ref(-1)
 let pageReady = false
@@ -118,6 +119,7 @@ function resetCaptureSessionState() {
   captureReady.value = false
   captureStarted.value = false
   captureInProgress.value = false
+  cameraSwitching.value = false
   captureButtonText.value = "开始抓拍"
   currentCameraId.value = -1
   croppedImageSrc.value = ""
@@ -206,6 +208,7 @@ function onCaptureTips(tips: Map<string, any>) {
 function onCaptureError(error: Map<string, any>) {
   const code = mapString(error, "code")
   const message = mapString(error, "message")
+  cameraSwitching.value = false
   if (code == "CAMERA_PERMISSION_REQUIRED") {
     captureTipText.value = message
     applyCameraPermissionDenied(false, "相机权限已失效，请重新授权")
@@ -214,6 +217,11 @@ function onCaptureError(error: Map<string, any>) {
 
   captureTipText.value = message
   statusText.value = `错误 ${code}：${message}`
+  if (code == "FRAME_PROCESS_FAILED" || code == "FRAME_PROCESS_TIMEOUT") {
+    captureInProgress.value = true
+    captureButtonText.value = "抓拍中…"
+    return
+  }
   if (code != "CAMERA_NOT_AVAILABLE" && code != "CAMERA_SWITCH_FAILED") {
     captureInProgress.value = false
     if (code == "BITMAP_ENCODE_FAILED") {
@@ -227,6 +235,7 @@ function onCaptureError(error: Map<string, any>) {
 
 function onCameraChange(result: Map<string, any>) {
   const cameraId = mapNumber(result, "cameraId")
+  cameraSwitching.value = false
   currentCameraId.value = cameraId
   statusText.value = `当前使用${cameraId == 0 ? '前置' : '后置'}相机`
 }
@@ -250,7 +259,11 @@ function startOrRetryCapture() {
 
 function toggleCamera() {
   const component = captureCompatRef.value
-  if (component == null || !captureReady.value || !captureStarted.value) return
+  if (
+    component == null || !captureReady.value || !captureStarted.value ||
+    cameraSwitching.value
+  ) return
+  cameraSwitching.value = true
   component.toggleCamera()
   statusText.value = "正在切换前后相机…"
 }
@@ -354,6 +367,11 @@ onShow(() => {
 
 onResize((options: OnResizeOptions) => {
   updateLayout(options.size.windowWidth, options.size.windowHeight)
+})
+
+onUnload(() => {
+  cameraSwitching.value = false
+  captureCompatRef.value?.stop()
 })
 </script>
 
