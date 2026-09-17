@@ -215,9 +215,16 @@ function onCaptureError(error: Map<string, any>) {
     return
   }
 
+  if (code == "FRAME_PROCESS_TIMEOUT") {
+    console.log(`[人脸抓拍自动恢复] ${code}: ${message}`)
+    captureInProgress.value = true
+    captureButtonText.value = "抓拍中…"
+    return
+  }
+
   captureTipText.value = message
   statusText.value = `错误 ${code}：${message}`
-  if (code == "FRAME_PROCESS_FAILED" || code == "FRAME_PROCESS_TIMEOUT") {
+  if (code == "FRAME_PROCESS_FAILED") {
     captureInProgress.value = true
     captureButtonText.value = "抓拍中…"
     return

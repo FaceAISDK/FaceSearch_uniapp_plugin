@@ -201,6 +201,13 @@ function onCaptureError(error: CaptureFaceError) {
     return
   }
 
+  if (error.code == "FRAME_PROCESS_TIMEOUT") {
+    console.log(`[人脸抓拍自动恢复] ${error.code}: ${error.message}`)
+    captureInProgress.value = true
+    captureButtonText.value = "抓拍中…"
+    return
+  }
+
   captureTipText.value = error.message
   statusText.value = `错误 ${error.code}：${error.message}`
   if (error.code != "CAMERA_NOT_AVAILABLE" && error.code != "CAMERA_SWITCH_FAILED") {

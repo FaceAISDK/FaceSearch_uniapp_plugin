@@ -99,6 +99,10 @@
 							`originBase64 length: ${result.originBase64.length}`
 					},
 					(error) => {
+						if (error.code === "FRAME_PROCESS_TIMEOUT") {
+							console.log(`[人脸抓拍自动恢复] ${error.code}: ${error.message}`)
+							return
+						}
 						this.faceAIResult = `持续抓拍错误 ${error.code}: ${error.message}`
 					}
 				)
