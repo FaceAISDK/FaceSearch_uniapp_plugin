@@ -42,6 +42,16 @@ export default {
       default: true
     }
   },
+  watch: {
+    cameraId: {
+      handler(newValue: number, _oldValue: number) {
+        // 兼容模式下 props 可能晚于 NVLoaded/autoStart 同步到组件实例。
+        // 始终把最新值写入原生 View，确保初始化及动态修改都使用目标镜头。
+        this.$el?.switchCamera(newValue.toInt())
+      },
+      immediate: true
+    }
+  },
   NVLoad(): CaptureFaceNativeView {
     const captureView = new CaptureFaceNativeView(this.$androidContext!)
     captureView.setFaceCoverVisible(this.showFaceCover)

@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>人脸抓拍兼容模式｜防卡死接入注意事项</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172033;
+      --muted: #667085;
+      --line: #d9e1ec;
+      --panel: #f6f8fb;
+      --brand: #08785a;
+      --brand-dark: #075b46;
+      --brand-soft: #e8f6f1;
+      --warn: #9a6700;
+      --warn-soft: #fff6d8;
+      --danger: #b42318;
+      --danger-soft: #fff0ee;
+      --code: #122033;
+      --code-ink: #e8eef7;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: #edf2f7;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 16px;
+      line-height: 1.72;
+    }
+
+    a { color: var(--brand-dark); }
+
+    code {
+      padding: 2px 6px;
+      border-radius: 5px;
+      color: #075b46;
+      background: #e8f6f1;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: .92em;
+    }
+
+    .hero {
+      padding: 54px 24px 48px;
+      color: #fff;
+      background:
+        radial-gradient(circle at 85% 15%, rgba(105, 235, 190, .24), transparent 30%),
+        linear-gradient(135deg, #073f34, #08785a 58%, #0b8f6c);
+    }
+
+    .hero-inner,
+    .document {
+      width: min(1080px, 100%);
+      margin: 0 auto;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      opacity: .82;
+    }
+
+    h1 {
+      max-width: 820px;
+      margin: 0;
+      font-size: clamp(30px, 5vw, 48px);
+      line-height: 1.18;
+      letter-spacing: -.02em;
+    }
+
+    .hero p {
+      max-width: 820px;
+      margin: 18px 0 0;
+      color: rgba(255, 255, 255, .88);
+      font-size: 17px;
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+    .meta span {
+      padding: 6px 12px;
+      border: 1px solid rgba(255, 255, 255, .28);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .1);
+      font-size: 13px;
+    }
+
+    .document { padding: 28px 20px 64px; }
+
+    .toc,
+    section {
+      margin-bottom: 22px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+      box-shadow: 0 8px 30px rgba(22, 34, 51, .06);
+    }
+
+    .toc { padding: 18px 22px; }
+
+    .toc strong { display: block; margin-bottom: 7px; }
+
+    .toc-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+    }
+
+    .toc a {
+      color: var(--brand-dark);
+      font-size: 14px;
+      font-weight: 650;
+      text-decoration: none;
+    }
+
+    section { padding: 28px; }
+
+    h2 {
+      margin: 0 0 18px;
+      font-size: 25px;
+      line-height: 1.3;
+    }
+
+    h3 {
+      margin: 25px 0 10px;
+      font-size: 18px;
+    }
+
+    p { margin: 9px 0; }
+
+    ul,
+    ol { margin: 10px 0; padding-left: 24px; }
+
+    li + li { margin-top: 7px; }
+
+    .must-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .must-list li {
+      position: relative;
+      margin: 0;
+      padding: 15px 16px 15px 46px;
+      border: 1px solid #cde8de;
+      border-radius: 11px;
+      background: var(--brand-soft);
+    }
+
+    .must-list li::before {
+      position: absolute;
+      top: 14px;
+      left: 15px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      color: #fff;
+      background: var(--brand);
+      content: "✓";
+      font-size: 14px;
+      font-weight: 800;
+      line-height: 22px;
+      text-align: center;
+    }
+
+    .callout {
+      margin: 18px 0;
+      padding: 14px 16px;
+      border-left: 4px solid var(--brand);
+      border-radius: 8px;
+      background: var(--brand-soft);
+    }
+
+    .callout.warning {
+      border-left-color: #d99a00;
+      background: var(--warn-soft);
+    }
+
+    .callout.danger {
+      border-left-color: var(--danger);
+      background: var(--danger-soft);
+    }
+
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 720px;
+    }
+
+    th,
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+      text-align: left;
+    }
+
+    th {
+      color: #344054;
+      background: var(--panel);
+      font-size: 14px;
+    }
+
+    tr:last-child td { border-bottom: 0; }
+
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      color: var(--brand-dark);
+      background: var(--brand-soft);
+      font-size: 12px;
+      font-weight: 750;
+      white-space: nowrap;
+    }
+
+    .tag.warn {
+      color: var(--warn);
+      background: var(--warn-soft);
+    }
+
+    .tag.stop {
+      color: var(--danger);
+      background: var(--danger-soft);
+    }
+
+    .code-wrap {
+      margin: 16px 0;
+      overflow: hidden;
+      border-radius: 12px;
+      background: var(--code);
+    }
+
+    .code-title {
+      padding: 9px 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, .12);
+      color: #9fb3ca;
+      font-size: 13px;
+    }
+
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      color: var(--code-ink);
+      font: 13px/1.65 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      tab-size: 2;
+    }
+
+    pre code {
+      padding: 0;
+      color: inherit;
+      background: transparent;
+      font-size: inherit;
+    }
+
+    .checklist {
+      padding: 0;
+      list-style: none;
+      counter-reset: item;
+    }
+
+    .checklist li {
+      position: relative;
+      margin: 0;
+      padding: 11px 12px 11px 42px;
+      border-bottom: 1px solid var(--line);
+      counter-increment: item;
+    }
+
+    .checklist li::before {
+      position: absolute;
+      top: 11px;
+      left: 7px;
+      width: 24px;
+      height: 24px;
+      border: 1px solid #a9b5c5;
+      border-radius: 6px;
+      color: var(--muted);
+      content: counter(item);
+      font-size: 12px;
+      line-height: 22px;
+      text-align: center;
+    }
+
+    .footer {
+      padding: 24px;
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+    }
+
+    @media (max-width: 720px) {
+      .hero { padding-top: 38px; }
+      .document { padding-inline: 12px; }
+      section { padding: 21px 18px; }
+      .must-list { grid-template-columns: 1fr; }
+    }
+
+    @media print {
+      body { background: #fff; }
+      .hero { padding: 28px; print-color-adjust: exact; }
+      .document { width: 100%; padding: 14px 0; }
+      .toc { display: none; }
+      section { box-shadow: none; break-inside: avoid; }
+      .code-wrap { break-inside: avoid; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-inner">
+      <p class="eyebrow">FaceAI Search · Client Integration Note</p>
+      <h1>人脸抓拍兼容模式<br>防卡死接入注意事项</h1>
+      <p>适用于传统 uni-app 的 <code>&lt;face-ai-capture-compat&gt;</code> Android 组件。请接入方严格遵守本页的生命周期、按钮防重入和 Base64 处理要求。</p>
+      <div class="meta">
+        <span>组件版本：4.0.0</span>
+        <span>更新日期：2026-09-17</span>
+        <span>适用页面：.nvue</span>
+        <span>Android minSdk：23</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="document">
+    <nav class="toc" aria-label="文档目录">
+      <strong>快速导航</strong>
+      <div class="toc-links">
+        <a href="#must">必须遵守</a>
+        <a href="#lifecycle">正确生命周期</a>
+        <a href="#sample">推荐代码</a>
+        <a href="#errors">错误处理</a>
+        <a href="#diagnosis">卡死判断</a>
+        <a href="#acceptance">验收清单</a>
+      </div>
+    </nav>
+
+    <section id="must">
+      <h2>一、必须遵守的 10 条规则</h2>
+      <ul class="must-list">
+        <li>抓拍页面必须使用 <strong>.nvue</strong>，并给组件设置明确、非零的宽高。</li>
+        <li>一个页面只允许挂载一个抓拍组件，禁止隐藏着第二个实例。</li>
+        <li>先取得相机权限，再通过 <code>v-if</code> 挂载组件。</li>
+        <li><code>autoStart=true</code> 时，禁止在 <code>ready</code> 回调里再次调用 <code>start()</code>。</li>
+        <li>首次结果之后，下一轮调用 <code>retry()</code>，不要重复调用 <code>start()</code>。</li>
+        <li>重试和切换相机必须加按钮锁，等待结果事件后才能再次点击。</li>
+        <li>页面卸载时调用 <code>stop()</code>，不要用延时器在卸载后重新启动。</li>
+        <li>进入抓拍页前，先停止扫码、录像或其他占用相机的插件。</li>
+        <li>禁止完整打印、深拷贝或长期保存结果中的两张 Base64 图片。</li>
+        <li>收到错误时按错误码处理，禁止用无限定时重启掩盖错误。</li>
+      </ul>
+
+      <div class="callout danger">
+        <strong>高风险写法：</strong><code>setInterval(() =&gt; capture.start(), 1000)</code>、在多个 watch 中调用
+        <code>start()</code>、连续点击 <code>toggleCamera()</code>、<code>console.log(result)</code>。这些写法可能造成相机反复绑定、主线程拥塞或内存快速增长。
+      </div>
+    </section>
+
+    <section id="lifecycle">
+      <h2>二、正确的调用生命周期</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>阶段</th><th>接入方动作</th><th>禁止事项</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>进入页面</td><td>检查并申请 CAMERA 权限；成功后再挂载组件。</td><td>权限未知时直接创建并反复重建组件。</td></tr>
+            <tr><td><code>ready</code></td><td><code>autoStart=true</code> 时只更新 UI 状态，等待相机启动。</td><td>再次调用 <code>start()</code>。</td></tr>
+            <tr><td><code>tips</code></td><td>只更新短提示文字。</td><td>在每次提示中发请求、重建页面或切换相机。</td></tr>
+            <tr><td><code>result</code></td><td>处理本轮结果，解除抓拍锁；需要下一轮时由用户触发 <code>retry()</code>。</td><td>在回调中立即递归调用 <code>start()</code>。</td></tr>
+            <tr><td>切换相机</td><td>设置 <code>cameraSwitching=true</code>；收到 <code>camera-change</code> 或 <code>error</code> 后解除。</td><td>切换完成前再次调用切换方法。</td></tr>
+            <tr><td>退出页面</td><td>调用一次 <code>stop()</code>；组件销毁时插件会完成最终释放。</td><td>保留定时器、异步回调再次调用组件。</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout warning">
+        如果使用 <code>autoStart=false</code>，应在权限通过且收到 <code>ready</code> 后只调用一次 <code>start()</code>。参数变化时优先调用对应方法，例如切换镜头使用 <code>switchCamera(0/1)</code>。
+      </div>
+    </section>
+
+    <section id="sample">
+      <h2>三、推荐的 .nvue 接入写法</h2>
+      <p>下面只展示防重入和生命周期相关代码。事件参数可能是普通对象、<code>event.detail</code> 或 Map，因此统一通过 <code>readField()</code> 读取。</p>
+
+      <div class="code-wrap">
+        <div class="code-title">pages/face-capture/face-capture.nvue</div>
+        <pre><code>&lt;template&gt;
+  &lt;view class="page"&gt;
+    &lt;face-ai-capture-compat
+      v-if="cameraGranted"
+      ref="captureCompat"
+      :needLivenessCheck="false"
+      :cameraId="0"
+      :linearZoom="0.01"
+      :showFaceCover="true"
+      :showFaceCoverTips="true"
+      :autoStart="true"
+      style="width: 750rpx; height: 900rpx; background-color: #000;"
+      @ready="onCaptureReady"
+      @result="onCaptureResult"
+      @tips="onCaptureTips"
+      @error="onCaptureError"
+      @camera-change="onCameraChange"
+    /&gt;
+
+    &lt;button :disabled="!ready || capturing" @tap="retryCapture"&gt;
+      {{ capturing ? '抓拍中…' : '再次抓拍' }}
+    &lt;/button&gt;
+    &lt;button :disabled="!ready || cameraSwitching" @tap="toggleCamera"&gt;
+      {{ cameraSwitching ? '切换中…' : '切换相机' }}
+    &lt;/button&gt;
+  &lt;/view&gt;
+&lt;/template&gt;
+
+&lt;script&gt;
+export default {
+  data() {
+    return {
+      cameraGranted: false,
+      ready: false,
+      capturing: false,
+      cameraSwitching: false,
+      statusText: ''
+    }
+  },
+
+  onUnload() {
+    const capture = this.$refs.captureCompat
+    if (capture) capture.stop()
+    this.ready = false
+    this.capturing = false
+    this.cameraSwitching = false
+  },
+
+  methods: {
+    readField(payload, key) {
+      const source = payload &amp;&amp; payload.detail ? payload.detail : payload
+      if (!source) return undefined
+      if (typeof source.get === 'function') return source.get(key)
+      return source[key]
+    },
+
+    onCaptureReady() {
+      // autoStart=true：这里不要再调用 start()。
+      this.ready = true
+      this.capturing = true
+      this.statusText = '相机启动中…'
+    },
+
+    onCaptureResult(payload) {
+      const croppedBase64 = this.readField(payload, 'croppedBase64') || ''
+      const originBase64 = this.readField(payload, 'originBase64') || ''
+      const silentScore = Number(this.readField(payload, 'silentScore') || 0)
+
+      this.capturing = false
+      this.statusText = '本轮抓拍完成'
+
+      // 交给业务方法立即展示或提交；禁止 console.log(payload)。
+      this.handleCaptureResult(croppedBase64, originBase64, silentScore)
+    },
+
+    onCaptureTips(payload) {
+      this.statusText = this.readField(payload, 'message') || ''
+    },
+
+    onCameraChange(payload) {
+      this.cameraSwitching = false
+      const cameraId = Number(this.readField(payload, 'cameraId') || 0)
+      this.statusText = cameraId === 0 ? '当前为前置相机' : '当前为后置相机'
+    },
+
+    onCaptureError(payload) {
+      const code = this.readField(payload, 'code') || 'UNKNOWN'
+      const message = this.readField(payload, 'message') || ''
+      this.cameraSwitching = false
+      this.statusText = code + '：' + message
+
+      // 单帧异常由组件自动跳过或复位，不要销毁重建。
+      if (code === 'FRAME_PROCESS_FAILED' || code === 'FRAME_PROCESS_TIMEOUT') {
+        this.capturing = true
+        return
+      }
+
+      // 切换失败时原相机仍可能可用。
+      if (code === 'CAMERA_NOT_AVAILABLE' || code === 'CAMERA_SWITCH_FAILED') {
+        return
+      }
+
+      this.capturing = false
+      if (code === 'CAMERA_PERMISSION_REQUIRED') this.cameraGranted = false
+    },
+
+    retryCapture() {
+      const capture = this.$refs.captureCompat
+      if (!capture || !this.ready || this.capturing) return
+      this.capturing = true
+      capture.retry()
+    },
+
+    toggleCamera() {
+      const capture = this.$refs.captureCompat
+      if (!capture || !this.ready || this.cameraSwitching) return
+      this.cameraSwitching = true
+      capture.toggleCamera()
+    },
+
+    handleCaptureResult(croppedBase64, originBase64, silentScore) {
+      // 由业务方实现。使用完成后及时解除对 Base64 字符串的引用。
+    }
+  }
+}
+&lt;/script&gt;</code></pre>
+      </div>
+
+      <div class="callout">
+        结果包含裁剪图和相机原图两段 Base64。不要把整个 <code>payload</code> 写入日志、URL、长生命周期全局状态或重复 JSON 序列化；这些操作通常比相机检测本身更容易造成页面卡顿和内存峰值。
+      </div>
+    </section>
+
+    <section id="errors">
+      <h2>四、错误码处理原则</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>错误码</th><th>级别</th><th>接入方处理</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>FRAME_PROCESS_FAILED</code></td><td><span class="tag">可恢复</span></td><td>组件会继续处理后续帧，保持页面和组件，不要重建。</td></tr>
+            <tr><td><code>FRAME_PROCESS_TIMEOUT</code></td><td><span class="tag">可恢复</span></td><td>组件已自动复位检测状态；记录设备型号和错误即可。</td></tr>
+            <tr><td><code>CAMERA_NOT_AVAILABLE</code></td><td><span class="tag warn">切换失败</span></td><td>提示设备没有目标镜头，解除切换按钮锁。</td></tr>
+            <tr><td><code>CAMERA_SWITCH_FAILED</code></td><td><span class="tag warn">切换失败</span></td><td>保持当前镜头，解除切换按钮锁，不要连续重试。</td></tr>
+            <tr><td><code>BITMAP_ENCODE_FAILED</code></td><td><span class="tag warn">本轮失败</span></td><td>允许用户再次调用 <code>retry()</code>。</td></tr>
+            <tr><td><code>CAMERA_PERMISSION_REQUIRED</code></td><td><span class="tag stop">需停止</span></td><td>隐藏组件，重新申请权限或引导用户进入系统设置。</td></tr>
+            <tr><td><code>CAMERA_BIND_FAILED</code></td><td><span class="tag stop">需停止</span></td><td>检查是否有其他相机插件占用、页面生命周期和依赖版本。</td></tr>
+            <tr><td><code>CAMERA_PREVIEW_NOT_STREAMING</code></td><td><span class="tag stop">需停止</span></td><td>预览兼容降级仍失败；不要使用无限定时器反复启动。</td></tr>
+            <tr><td><code>CAPTURE_SESSION_REPLACED</code></td><td><span class="tag stop">重复实例</span></td><td>另一个抓拍组件接管了相机，检查重复挂载。</td></tr>
+            <tr><td><code>SDK_INIT_FAILED</code></td><td><span class="tag stop">初始化失败</span></td><td>记录完整错误文本，停止当前会话，允许用户手动重新进入页面。</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="diagnosis">
+      <h2>五、出现“卡死”时如何判断</h2>
+      <ol>
+        <li><strong>按钮、滚动和返回手势全部无响应：</strong>属于 UI 主线程阻塞。首先检查是否打印完整 Base64、同步上传、频繁 JSON 序列化，或者循环创建/销毁组件。</li>
+        <li><strong>页面仍可点击，但预览黑屏：</strong>通常是权限、相机被占用、生命周期或 CameraX 绑定问题。查看 <code>error</code> 事件。</li>
+        <li><strong>预览正常、提示还在变化，但没有第二次结果：</strong>检查上一轮结果后是否调用了 <code>retry()</code>。</li>
+        <li><strong>切换相机后短暂停顿：</strong>等待 <code>camera-change</code> 或 <code>error</code>，不要连续点击，也不要定时重复切换。</li>
+        <li><strong>频繁进出页面后才出现：</strong>检查页面卸载是否调用 <code>stop()</code>，以及是否存在未清理的定时器或第二个相机组件。</li>
+      </ol>
+
+      <div class="callout warning">
+        排查时请保留：手机品牌与型号、Android 版本、发生时间、最近一次错误码、是否刚切换相机、是否存在扫码/录像插件。不要提交包含完整人脸 Base64 的日志。
+      </div>
+    </section>
+
+    <section id="acceptance">
+      <h2>六、交付前稳定性验收清单</h2>
+      <ol class="checklist">
+        <li>首次授权、拒绝授权、永久拒绝、从系统设置返回四条路径均测试通过。</li>
+        <li>连续完成至少 50 次 <code>result → retry</code>，页面响应正常，内存没有持续上升。</li>
+        <li>连续切换前后摄像头 20 次，按钮不会连点，均收到 <code>camera-change</code> 或 <code>error</code>。</li>
+        <li>连续进入和退出抓拍页面 50 次，再次进入仍可正常打开相机。</li>
+        <li>抓拍期间切到后台再返回，页面不会保留不可用的黑屏实例。</li>
+        <li>进入抓拍页前启动过扫码或其他相机功能时，已确认前一个相机会话完全停止。</li>
+        <li>业务代码中不存在 <code>console.log(result)</code>、循环 <code>start()</code> 或无限自动重启逻辑。</li>
+        <li>Base64 使用完成后会清空，不会长期存入 Pinia、Vuex、本地缓存或页面历史。</li>
+        <li>在至少一台低内存设备和客户主要目标机型上完成真机测试。</li>
+      </ol>
+    </section>
+  </main>
+
+  <footer class="footer">
+    FaceAI Search 人脸抓拍兼容模式 · 客户接入稳定性说明 · 2026-09-17
+  </footer>
+</body>
+</html>

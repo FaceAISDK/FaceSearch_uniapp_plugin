@@ -5,11 +5,13 @@ import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.Matrix
 import android.graphics.drawable.GradientDrawable
 import android.hardware.display.DisplayManager
 import android.os.Looper
+import android.os.SystemClock
 import android.util.Log
 import android.util.Size
 import android.util.TypedValue
@@ -37,9 +39,15 @@ import com.faceAI.demo.FaceSDKConfig
 import com.faceAI.demo.R
 import com.faceAI.demo.base.utils.BitmapUtils
 import com.faceAI.demo.base.view.FaceCoverView
+import java.lang.ref.WeakReference
+import java.util.Collections
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * CaptureFaceActivity、UTS 标准模式组件和兼容模式组件共用的原生 View。
@@ -59,6 +67,16 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
     private val encodingResult = AtomicBoolean(false)
     private val waitingForRetry = AtomicBoolean(false)
     private val retryScheduled = AtomicBoolean(false)
+    private val nextFrameAnalysisAtMs = AtomicLong(0L)
+    private val frameErrorReported = AtomicBoolean(false)
+    private val frameTimeoutReported = AtomicBoolean(false)
+    private val lastSdkCallbackAtMs = AtomicLong(0L)
+    private val retainedFrameBitmaps = Collections.newSetFromMap(
+        ConcurrentHashMap<Bitmap, Boolean>()
+    )
+    private val pendingTipsCode = AtomicInteger(NO_PENDING_TIPS)
+    private val pendingTipsSession = AtomicLong(NO_SESSION)
+    private val tipsDispatchScheduled = AtomicBoolean(false)
 
     @Volatile
     private var cameraProvider: ProcessCameraProvider? = null
@@ -66,6 +84,7 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
     private var boundPreview: Preview? = null
     private var boundImageAnalysis: ImageAnalysis? = null
     private var boundCameraSelector: CameraSelector? = null
+    @Volatile
     private var faceDispose: CaptureFaceDispose? = null
     private var resultCallback: ((String, Float, String) -> Unit)? = null
     private var tipsCallback: ((Int, String) -> Unit)? = null
@@ -84,13 +103,22 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
     private var faceCoverTipsVisible = false
     @Volatile
     private var forceFitCenterPreview = false
+    @Volatile
     private var started = false
+    @Volatile
     private var released = false
+    @Volatile
     private var sessionId = 0L
     private var startScheduled = false
+    private var scheduledStartGeneration = 0L
+    private var cameraInitializing = false
+    private var restartAfterAttach = false
     private var previewStreaming = false
     private var previewFallbackTried = false
+    @Volatile
     private var cameraBindingGeneration = 0L
+    private var cameraTransitionInProgress = false
+    private var pendingCameraId: Int? = null
     private val displayManager =
         context.getSystemService(Context.DISPLAY_SERVICE) as? DisplayManager
     private var displayListenerRegistered = false
@@ -108,6 +136,18 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
         }
     }
 
+    private val tipsDispatchRunnable = Runnable {
+        tipsDispatchScheduled.set(false)
+        val tipsSession = pendingTipsSession.getAndSet(NO_SESSION)
+        val actionCode = pendingTipsCode.getAndSet(NO_PENDING_TIPS)
+        if (
+            actionCode != NO_PENDING_TIPS && started && !released &&
+            tipsSession == sessionId
+        ) {
+            showProcessTips(actionCode)
+        }
+    }
+
     private val startOnLayoutListener = object : View.OnLayoutChangeListener {
         override fun onLayoutChange(
             view: View,
@@ -122,8 +162,12 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
         ) {
             if (view.isAttachedToWindow && right > left && bottom > top) {
                 view.removeOnLayoutChangeListener(this)
-                startScheduled = false
-                view.post { startCameraWhenReady() }
+                val generation = scheduledStartGeneration
+                view.post {
+                    if (!startScheduled || generation != scheduledStartGeneration) return@post
+                    startScheduled = false
+                    startCameraWhenReady()
+                }
             }
         }
     }
@@ -264,7 +308,7 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
 
     /**
      * 开始一次抓拍会话。成功后会暂停检测，调用 retry() 才会进入下一轮。
-     * 重复调用会先结束上一轮，再使用新参数重新绑定相机。
+     * 相同参数的重复 start() 是幂等的，避免页面重复更新导致相机反复解绑、绑定。
      */
     @JvmOverloads
     fun start(
@@ -274,46 +318,64 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
         linearZoom: Float = 0.01f,
         rotationDegrees: Int = AUTO_ROTATION_DEGREES
     ) {
-        if (released) {
-            notifyError("VIEW_RELEASED", "CaptureFaceNativeView has been released")
-            return
-        }
+        runOnMainThread {
+            if (released) {
+                notifyError("VIEW_RELEASED", "CaptureFaceNativeView has been released")
+                return@runOnMainThread
+            }
 
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) !=
-            PackageManager.PERMISSION_GRANTED
-        ) {
-            notifyError("CAMERA_PERMISSION_REQUIRED", "Camera permission is required")
-            return
-        }
+            if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) !=
+                PackageManager.PERMISSION_GRANTED
+            ) {
+                notifyError("CAMERA_PERMISSION_REQUIRED", "Camera permission is required")
+                return@runOnMainThread
+            }
 
-        if (!isSupportedCameraId(cameraId)) {
-            notifyError("INVALID_CAMERA_ID", "cameraId must be 0 (front) or 1 (back)")
-            return
-        }
+            if (!isSupportedCameraId(cameraId)) {
+                notifyError("INVALID_CAMERA_ID", "cameraId must be 0 (front) or 1 (back)")
+                return@runOnMainThread
+            }
 
-        if (!isSupportedRotationDegrees(rotationDegrees)) {
-            notifyError(
-                "INVALID_ROTATION_DEGREES",
-                "rotationDegrees must be -1 (auto), 0, 90, 180 or 270"
+            if (!isSupportedRotationDegrees(rotationDegrees)) {
+                notifyError(
+                    "INVALID_ROTATION_DEGREES",
+                    "rotationDegrees must be -1 (auto), 0, 90, 180 or 270"
+                )
+                return@runOnMainThread
+            }
+
+            val normalizedPerformanceMode = performanceMode.coerceIn(
+                CaptureFaceDispose.PERFORMANCE_MODE_NO_LIMIT,
+                CaptureFaceDispose.PERFORMANCE_MODE_ACCURATE
             )
-            return
+            val normalizedZoom = linearZoom.coerceIn(0f, 1f)
+            val sameConfiguration =
+                this.performanceMode == normalizedPerformanceMode &&
+                    this.needLivenessCheck == needLivenessCheck &&
+                    this.cameraId == cameraId &&
+                    this.linearZoom == normalizedZoom &&
+                    this.rotationDegrees == rotationDegrees
+
+            if (sameConfiguration && (started || cameraInitializing || startScheduled)) {
+                if (waitingForRetry.get()) retry()
+                return@runOnMainThread
+            }
+
+            cancelScheduledStart()
+            restartAfterAttach = false
+            this.performanceMode = normalizedPerformanceMode
+            this.needLivenessCheck = needLivenessCheck
+            this.cameraId = cameraId
+            this.linearZoom = normalizedZoom
+            this.rotationDegrees = rotationDegrees
+
+            if (!isAttachedToWindow || width == 0 || height == 0) {
+                scheduleStartAfterLayout()
+                return@runOnMainThread
+            }
+
+            startCameraWhenReady()
         }
-
-        this.performanceMode = performanceMode.coerceIn(
-            CaptureFaceDispose.PERFORMANCE_MODE_NO_LIMIT,
-            CaptureFaceDispose.PERFORMANCE_MODE_ACCURATE
-        )
-        this.needLivenessCheck = needLivenessCheck
-        this.cameraId = cameraId
-        this.linearZoom = linearZoom.coerceIn(0f, 1f)
-        this.rotationDegrees = rotationDegrees
-
-        if (!isAttachedToWindow || width == 0 || height == 0) {
-            scheduleStartAfterLayout()
-            return
-        }
-
-        startCameraWhenReady()
     }
 
     private fun startCameraWhenReady() {
@@ -330,40 +392,20 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
         }
 
         stopInternal()
+        claimActiveInstance(this)?.stopForReplacement()
         this.started = true
+        cameraInitializing = true
         registerDisplayListener()
         previewStreaming = false
         previewFallbackTried = false
         previewView.implementationMode = PreviewView.ImplementationMode.PERFORMANCE
         val currentSession = ++sessionId
         waitingForRetry.set(false)
-
-        // API、标准组件、兼容组件都可以独立作为第一个插件入口使用。
-        FaceSDKConfig.init(context)
-        faceDispose = CaptureFaceDispose(
-            context,
-            this.performanceMode,
-            this.needLivenessCheck,
-            object : AddFaceCallBack() {
-                override fun onCompleted(
-                    cropped: android.graphics.Bitmap,
-                    silentScore: Float,
-                    origin: android.graphics.Bitmap
-                ) {
-                    if (!started || released || currentSession != sessionId) return
-                    if (!waitingForRetry.compareAndSet(false, true)) return
-                    encodeAndDispatch(currentSession, cropped, silentScore, origin)
-                }
-
-                override fun onProcessTips(actionCode: Int) {
-                    post {
-                        if (started && !released && currentSession == sessionId) {
-                            showProcessTips(actionCode)
-                        }
-                    }
-                }
-            }
-        )
+        nextFrameAnalysisAtMs.set(SystemClock.elapsedRealtime() + SDK_START_SETTLE_MS)
+        frameErrorReported.set(false)
+        frameTimeoutReported.set(false)
+        lastSdkCallbackAtMs.set(SystemClock.elapsedRealtime())
+        queueFaceDisposeCreation(currentSession)
 
         val providerFuture = ProcessCameraProvider.getInstance(context)
         providerFuture.addListener({
@@ -371,18 +413,27 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
                 return@addListener
             }
             try {
+                cameraInitializing = false
                 cameraProvider = providerFuture.get()
-                bindCamera(lifecycleOwner, currentSession)
+                cameraTransitionInProgress = true
+                if (!bindCamera(lifecycleOwner, currentSession)) {
+                    stopInternal()
+                }
             } catch (e: Exception) {
+                cameraInitializing = false
+                stopInternal()
                 notifyError("CAMERA_INIT_FAILED", e.message ?: "Camera initialization failed")
             }
         }, ContextCompat.getMainExecutor(context))
     }
 
     fun stop() {
-        if (released) return
-        cancelScheduledStart()
-        stopInternal()
+        runOnMainThread {
+            if (released) return@runOnMainThread
+            restartAfterAttach = false
+            cancelScheduledStart()
+            stopInternal()
+        }
     }
 
     fun retry() {
@@ -402,8 +453,23 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
                         waitingForRetry.get()
                     ) {
                         val dispose = faceDispose ?: return@execute
-                        dispose.retry()
+                        val retried = synchronized(SDK_CALL_LOCK) {
+                            if (
+                                started && !released && currentSession == sessionId &&
+                                dispose === faceDispose
+                            ) {
+                                dispose.retry()
+                                true
+                            } else {
+                                false
+                            }
+                        }
+                        if (!retried) return@execute
                         // SDK 状态重置完成后再放行帧分析，避免首帧与 retry() 并发。
+                        nextFrameAnalysisAtMs.set(
+                            SystemClock.elapsedRealtime() + SDK_RETRY_SETTLE_MS
+                        )
+                        frameErrorReported.set(false)
                         waitingForRetry.set(false)
                     }
                 } catch (e: Exception) {
@@ -446,6 +512,12 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
                 return@runOnMainThread
             }
 
+            // CameraX 的解绑/绑定与 Surface 建立不可重入，只保留最后一次切换目标。
+            if (cameraTransitionInProgress) {
+                pendingCameraId = newCameraId
+                return@runOnMainThread
+            }
+
             val lifecycleOwner = findActivity() as? LifecycleOwner
             if (lifecycleOwner == null) {
                 notifyError(
@@ -455,16 +527,7 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
                 return@runOnMainThread
             }
 
-            previewStreaming = false
-            previewFallbackTried = false
-            previewView.implementationMode = PreviewView.ImplementationMode.PERFORMANCE
-            bindCamera(
-                lifecycleOwner,
-                sessionId,
-                newCameraId,
-                allowFallback = false,
-                notifySwitch = true
-            )
+            performCameraSwitch(lifecycleOwner, newCameraId)
         }
     }
 
@@ -480,27 +543,45 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
     }
 
     fun release() {
-        if (released) return
-        cancelScheduledStart()
-        stopInternal()
-        released = true
-        resultCallback = null
-        tipsCallback = null
-        errorCallback = null
-        cameraChangedCallback = null
-        analysisExecutor.shutdownNow()
-        resultExecutor.shutdownNow()
+        runOnMainThread {
+            if (released) return@runOnMainThread
+            released = true
+            restartAfterAttach = false
+            cancelScheduledStart()
+            stopInternal()
+            resultCallback = null
+            tipsCallback = null
+            errorCallback = null
+            cameraChangedCallback = null
+            // 等待已排队的 SDK release / Bitmap 回收完成，避免 shutdownNow() 遗留资源。
+            analysisExecutor.shutdown()
+            resultExecutor.shutdown()
+        }
     }
 
     override fun onDetachedFromWindow() {
         // 标准组件由 onUnmounted、兼容组件由 NVBeforeUnload 负责最终 release。
-        // 这里仅停止相机，避免 native-view 临时重新挂载时实例被永久标记 released。
+        // 临时 detach 仅停止相机，并在 attach 后使用原参数恢复，避免返回页面黑屏。
+        restartAfterAttach = !released && (started || cameraInitializing || startScheduled)
         cancelScheduledStart()
         stopInternal()
         super.onDetachedFromWindow()
     }
 
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        if (restartAfterAttach && !released) {
+            restartAfterAttach = false
+            if (width == 0 || height == 0) {
+                scheduleStartAfterLayout()
+            } else {
+                post { startCameraWhenReady() }
+            }
+        }
+    }
+
     private fun cancelScheduledStart() {
+        scheduledStartGeneration++
         if (startScheduled) {
             removeOnLayoutChangeListener(startOnLayoutListener)
             startScheduled = false
@@ -509,8 +590,187 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
 
     private fun scheduleStartAfterLayout() {
         if (!startScheduled) {
+            scheduledStartGeneration++
             startScheduled = true
             addOnLayoutChangeListener(startOnLayoutListener)
+        }
+    }
+
+    private fun queueFaceDisposeCreation(currentSession: Long) {
+        try {
+            SDK_LIFECYCLE_EXECUTOR.execute {
+                try {
+                    val newDispose = synchronized(SDK_CALL_LOCK) {
+                        ensureFaceSdkInitialized(context.applicationContext)
+                        CaptureFaceDispose(
+                            context,
+                            performanceMode,
+                            needLivenessCheck,
+                            object : AddFaceCallBack() {
+                                override fun onCompleted(
+                                    cropped: Bitmap,
+                                    silentScore: Float,
+                                    origin: Bitmap
+                                ) {
+                                    markSdkCallback(cropped, origin)
+                                    if (
+                                        !started || released || currentSession != sessionId
+                                    ) {
+                                        recycleResultBitmaps(cropped, origin)
+                                        return
+                                    }
+                                    if (!waitingForRetry.compareAndSet(false, true)) {
+                                        recycleResultBitmaps(cropped, origin)
+                                        return
+                                    }
+                                    encodeAndDispatch(
+                                        currentSession,
+                                        cropped,
+                                        silentScore,
+                                        origin
+                                    )
+                                }
+
+                                override fun onProcessTips(actionCode: Int) {
+                                    markSdkCallback()
+                                    if (started && !released && currentSession == sessionId) {
+                                        enqueueProcessTips(currentSession, actionCode)
+                                    }
+                                }
+                            }
+                        )
+                    }
+
+                    if (started && !released && currentSession == sessionId) {
+                        faceDispose = newDispose
+                    } else {
+                        synchronized(SDK_CALL_LOCK) { newDispose.release() }
+                    }
+                } catch (e: LinkageError) {
+                    failSdkInitialization(currentSession, e)
+                } catch (e: Exception) {
+                    failSdkInitialization(currentSession, e)
+                }
+            }
+        } catch (e: RejectedExecutionException) {
+            failSdkInitialization(currentSession, e)
+        }
+    }
+
+    private fun failSdkInitialization(currentSession: Long, error: Throwable) {
+        post {
+            if (started && !released && currentSession == sessionId) {
+                stopInternal()
+                notifyError("SDK_INIT_FAILED", error.message ?: "Capture SDK initialization failed")
+            }
+        }
+    }
+
+    private fun enqueueProcessTips(currentSession: Long, actionCode: Int) {
+        pendingTipsSession.set(currentSession)
+        pendingTipsCode.set(actionCode)
+        if (tipsDispatchScheduled.compareAndSet(false, true)) {
+            postDelayed(tipsDispatchRunnable, TIPS_DISPATCH_INTERVAL_MS)
+        }
+    }
+
+    private fun markSdkCallback(vararg resultBitmaps: Bitmap) {
+        lastSdkCallbackAtMs.set(SystemClock.elapsedRealtime())
+        frameTimeoutReported.set(false)
+        resultBitmaps.forEach { bitmap -> retainedFrameBitmaps.remove(bitmap) }
+    }
+
+    private fun retainFrameBitmap(bitmap: Bitmap) {
+        retainedFrameBitmaps.add(bitmap)
+        postDelayed({
+            if (retainedFrameBitmaps.remove(bitmap)) {
+                recycleBitmap(bitmap)
+            }
+        }, FRAME_BITMAP_RETENTION_MS)
+    }
+
+    private fun discardFrameBitmap(bitmap: Bitmap?) {
+        if (bitmap == null) return
+        retainedFrameBitmaps.remove(bitmap)
+        recycleBitmap(bitmap)
+    }
+
+    private fun resetSdkAfterCallbackTimeout(
+        currentSession: Long,
+        dispose: CaptureFaceDispose
+    ): Boolean {
+        val now = SystemClock.elapsedRealtime()
+        if (now - lastSdkCallbackAtMs.get() < FRAME_PROCESS_TIMEOUT_MS) return false
+
+        if (frameTimeoutReported.compareAndSet(false, true)) {
+            notifyError(
+                "FRAME_PROCESS_TIMEOUT",
+                "Face detector produced no feedback for 10 seconds and was reset"
+            )
+        }
+        return synchronized(SDK_CALL_LOCK) {
+            if (
+                started && !released && currentSession == sessionId &&
+                dispose === faceDispose
+            ) {
+                dispose.retry()
+                lastSdkCallbackAtMs.set(now)
+                nextFrameAnalysisAtMs.set(now + SDK_RETRY_SETTLE_MS)
+                true
+            } else {
+                false
+            }
+        }
+    }
+
+    private fun reserveFrameAnalysisSlot(): Boolean {
+        val now = SystemClock.elapsedRealtime()
+        while (true) {
+            val nextAllowed = nextFrameAnalysisAtMs.get()
+            if (now < nextAllowed) return false
+            if (nextFrameAnalysisAtMs.compareAndSet(nextAllowed, now + FRAME_ANALYSIS_INTERVAL_MS)) {
+                return true
+            }
+        }
+    }
+
+    private fun performCameraSwitch(lifecycleOwner: LifecycleOwner, newCameraId: Int) {
+        cameraTransitionInProgress = true
+        previewStreaming = false
+        previewFallbackTried = false
+        previewView.implementationMode = PreviewView.ImplementationMode.PERFORMANCE
+        if (!bindCamera(
+                lifecycleOwner,
+                sessionId,
+                newCameraId,
+                allowFallback = false,
+                notifySwitch = true
+            )
+        ) {
+            cameraTransitionInProgress = false
+            drainPendingCameraSwitch()
+        }
+    }
+
+    private fun drainPendingCameraSwitch() {
+        if (cameraTransitionInProgress || !started || released) return
+        val targetCameraId = pendingCameraId ?: return
+        pendingCameraId = null
+        if (targetCameraId == cameraId) return
+        val lifecycleOwner = findActivity() as? LifecycleOwner ?: return
+        performCameraSwitch(lifecycleOwner, targetCameraId)
+    }
+
+    private fun stopForReplacement() {
+        runOnMainThread {
+            if (released) return@runOnMainThread
+            restartAfterAttach = false
+            cancelScheduledStart()
+            stopInternal()
+            notifyError(
+                "CAPTURE_SESSION_REPLACED",
+                "Another capture component has taken over the camera"
+            )
         }
     }
 
@@ -528,12 +788,11 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
             allowFallback
         )
         if (selection == null) {
-            if (notifySwitch) {
-                notifyError(
-                    "CAMERA_NOT_AVAILABLE",
-                    "Requested camera is not available: $requestedCameraId"
-                )
-            }
+            cameraTransitionInProgress = false
+            notifyError(
+                "CAMERA_NOT_AVAILABLE",
+                "Requested camera is not available: $requestedCameraId"
+            )
             return false
         }
 
@@ -559,20 +818,53 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
             analysisExecutor,
             object : ImageAnalysis.Analyzer {
                 override fun analyze(imageProxy: ImageProxy) {
+                    var frameBitmap: Bitmap? = null
                     try {
                         if (
                             started && !released && currentSession == sessionId &&
                             analyzerGeneration == cameraBindingGeneration &&
-                            !encodingResult.get() && !waitingForRetry.get()
+                            !encodingResult.get() && !waitingForRetry.get() &&
+                            reserveFrameAnalysisSlot()
                         ) {
-                            faceDispose?.dispose(DataConvertUtils.imageProxy2Bitmap(imageProxy))
+                            val dispose = faceDispose
+                            if (dispose != null) {
+                                if (resetSdkAfterCallbackTimeout(currentSession, dispose)) return
+                                frameBitmap = DataConvertUtils.imageProxy2Bitmap(imageProxy)
+                                retainFrameBitmap(frameBitmap)
+                                synchronized(SDK_CALL_LOCK) {
+                                    if (
+                                        started && !released && currentSession == sessionId &&
+                                        dispose === faceDispose
+                                    ) {
+                                        frameBitmap?.let { bitmap ->
+                                            dispose.dispose(bitmap)
+                                            // SDK 异步持有该 Bitmap，所有权已移交给 SDK。
+                                            frameBitmap = null
+                                            frameErrorReported.set(false)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } catch (e: LinkageError) {
+                        discardFrameBitmap(frameBitmap)
+                        if (frameErrorReported.compareAndSet(false, true)) {
+                            notifyError(
+                                "FRAME_PROCESS_FAILED",
+                                e.message ?: "Camera frame processing dependency failed"
+                            )
                         }
                     } catch (e: Exception) {
-                        notifyError(
-                            "FRAME_PROCESS_FAILED",
-                            e.message ?: "Camera frame processing failed"
-                        )
+                        discardFrameBitmap(frameBitmap)
+                        // 连续帧失败只上报一次，避免错误事件淹没主线程和 JS bridge。
+                        if (frameErrorReported.compareAndSet(false, true)) {
+                            notifyError(
+                                "FRAME_PROCESS_FAILED",
+                                e.message ?: "Camera frame processing failed"
+                            )
+                        }
                     } finally {
+                        discardFrameBitmap(frameBitmap)
                         imageProxy.close()
                     }
                 }
@@ -620,9 +912,9 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
             }
 
             observePreviewStream(lifecycleOwner, currentSession, analyzerGeneration)
-            if (notifySwitch || actualCameraId != requestedCameraId) {
-                notifyCameraChanged(actualCameraId)
-            }
+            // 首次初始化也回传最终绑定的镜头，调用方可确认传入的 cameraId 是否生效，
+            // 或设备缺少目标镜头时是否发生了自动降级。
+            notifyCameraChanged(actualCameraId)
             return true
         } catch (e: LinkageError) {
             newImageAnalysis.clearAnalyzer()
@@ -635,6 +927,7 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
                 previousImageAnalysis
             )
             val code = if (notifySwitch) "CAMERA_SWITCH_FAILED" else "CAMERA_DEPENDENCY_CONFLICT"
+            cameraTransitionInProgress = false
             notifyError(code, e.message ?: "CameraX binary dependency conflict")
             return false
         } catch (e: Exception) {
@@ -648,6 +941,7 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
                 previousImageAnalysis
             )
             val code = if (notifySwitch) "CAMERA_SWITCH_FAILED" else "CAMERA_BIND_FAILED"
+            cameraTransitionInProgress = false
             notifyError(code, e.message ?: "Camera bind failed")
             return false
         }
@@ -665,6 +959,10 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
                 currentBindingGeneration == cameraBindingGeneration
             ) {
                 previewStreaming = state == PreviewView.StreamState.STREAMING
+                if (previewStreaming) {
+                    cameraTransitionInProgress = false
+                    drainPendingCameraSwitch()
+                }
             }
         }
 
@@ -679,14 +977,18 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
             if (!previewFallbackTried) {
                 previewFallbackTried = true
                 previewView.implementationMode = PreviewView.ImplementationMode.COMPATIBLE
-                bindCamera(
+                cameraTransitionInProgress = true
+                if (!bindCamera(
                     lifecycleOwner,
                     currentSession,
                     cameraId,
                     allowFallback = true,
                     notifySwitch = false
-                )
+                )) {
+                    stopInternal()
+                }
             } else {
+                stopInternal()
                 notifyError(
                     "CAMERA_PREVIEW_NOT_STREAMING",
                     "Camera opened but preview did not start streaming"
@@ -697,43 +999,67 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
 
     private fun encodeAndDispatch(
         currentSession: Long,
-        cropped: android.graphics.Bitmap,
+        cropped: Bitmap,
         silentScore: Float,
-        origin: android.graphics.Bitmap
+        origin: Bitmap
     ) {
-        if (!encodingResult.compareAndSet(false, true)) return
+        if (!encodingResult.compareAndSet(false, true)) {
+            recycleResultBitmaps(cropped, origin)
+            return
+        }
 
-        resultExecutor.execute {
-            try {
-                val croppedBase64 = BitmapUtils.bitmapToBase64(cropped)
-                val originBase64 = BitmapUtils.bitmapToBase64(origin)
-                post {
-                    if (started && !released && currentSession == sessionId) {
-                        try {
-                            resultCallback?.invoke(croppedBase64, silentScore, originBase64)
-                        } catch (e: Exception) {
-                            Log.e(TAG, "Result callback failed", e)
+        try {
+            resultExecutor.execute {
+                try {
+                    val croppedBase64 = BitmapUtils.bitmapToBase64(cropped)
+                    val originBase64 = BitmapUtils.bitmapToBase64(origin)
+                    post {
+                        if (started && !released && currentSession == sessionId) {
+                            try {
+                                resultCallback?.invoke(croppedBase64, silentScore, originBase64)
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Result callback failed", e)
+                            }
                         }
                     }
+                } catch (e: Exception) {
+                    notifyError("BITMAP_ENCODE_FAILED", e.message ?: "Bitmap Base64 encode failed")
+                } finally {
+                    recycleResultBitmaps(cropped, origin)
+                    encodingResult.set(false)
                 }
-            } catch (e: Exception) {
-                notifyError("BITMAP_ENCODE_FAILED", e.message ?: "Bitmap Base64 encode failed")
-            } finally {
-                encodingResult.set(false)
+            }
+        } catch (e: RejectedExecutionException) {
+            recycleResultBitmaps(cropped, origin)
+            encodingResult.set(false)
+            if (!released) {
+                notifyError("BITMAP_ENCODE_FAILED", "Bitmap encoder is not available")
             }
         }
     }
 
     private fun stopInternal() {
         started = false
+        cameraInitializing = false
         unregisterDisplayListener()
         sessionId++
         cameraBindingGeneration++
         previewStreaming = false
         previewFallbackTried = false
-        encodingResult.set(false)
+        cameraTransitionInProgress = false
+        pendingCameraId = null
         waitingForRetry.set(false)
         retryScheduled.set(false)
+        nextFrameAnalysisAtMs.set(0L)
+        frameErrorReported.set(false)
+        frameTimeoutReported.set(false)
+        lastSdkCallbackAtMs.set(0L)
+        val framesToRecycleAfterRelease = retainedFrameBitmaps.toList()
+        retainedFrameBitmaps.clear()
+        pendingTipsCode.set(NO_PENDING_TIPS)
+        pendingTipsSession.set(NO_SESSION)
+        tipsDispatchScheduled.set(false)
+        removeCallbacks(tipsDispatchRunnable)
         try {
             (findActivity() as? LifecycleOwner)?.let { lifecycleOwner ->
                 previewView.previewStreamState.removeObservers(lifecycleOwner)
@@ -747,8 +1073,31 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
         boundCameraSelector = null
         cameraControl = null
         cameraProvider = null
-        faceDispose?.release()
+        val disposeToRelease = faceDispose
         faceDispose = null
+        clearActiveInstance(this)
+        if (disposeToRelease != null) {
+            try {
+                SDK_LIFECYCLE_EXECUTOR.execute {
+                    synchronized(SDK_CALL_LOCK) {
+                        try {
+                            disposeToRelease.release()
+                        } catch (e: Exception) {
+                            Log.w(TAG, "Failed to release capture SDK", e)
+                        } finally {
+                            framesToRecycleAfterRelease.forEach { bitmap ->
+                                recycleBitmap(bitmap)
+                            }
+                        }
+                    }
+                }
+            } catch (e: RejectedExecutionException) {
+                Log.w(TAG, "Capture SDK executor is already closed", e)
+                framesToRecycleAfterRelease.forEach { bitmap -> recycleBitmap(bitmap) }
+            }
+        } else {
+            framesToRecycleAfterRelease.forEach { bitmap -> recycleBitmap(bitmap) }
+        }
     }
 
     private fun showProcessTips(actionCode: Int) {
@@ -956,6 +1305,20 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
         }
     }
 
+    private fun recycleResultBitmaps(cropped: Bitmap?, origin: Bitmap?) {
+        recycleBitmap(cropped)
+        if (origin !== cropped) recycleBitmap(origin)
+    }
+
+    private fun recycleBitmap(bitmap: Bitmap?) {
+        if (bitmap == null || bitmap.isRecycled) return
+        try {
+            bitmap.recycle()
+        } catch (e: Exception) {
+            Log.w(TAG, "Unable to recycle capture bitmap", e)
+        }
+    }
+
     private data class CameraSelection(
         val cameraSelector: CameraSelector,
         val cameraId: Int
@@ -964,10 +1327,47 @@ class CaptureFaceNativeView(context: Context) : FrameLayout(context) {
     private companion object {
         const val TAG = "CaptureFaceNativeView"
         const val PREVIEW_START_TIMEOUT_MS = 2500L
+        const val SDK_START_SETTLE_MS = 700L
+        const val SDK_RETRY_SETTLE_MS = 120L
+        const val FRAME_ANALYSIS_INTERVAL_MS = 333L
+        const val FRAME_PROCESS_TIMEOUT_MS = 10_000L
+        const val FRAME_BITMAP_RETENTION_MS = 2_000L
+        const val TIPS_DISPATCH_INTERVAL_MS = 250L
+        const val NO_PENDING_TIPS = Int.MIN_VALUE
+        const val NO_SESSION = -1L
         const val AUTO_ROTATION_DEGREES = -1
         const val FACE_COVER_MARGIN_WITH_TIPS_DIVISOR = 13
         const val FACE_COVER_MARGIN_WITHOUT_TIPS_DP = 4
         const val FACE_COVER_TIPS_GAP_DP = 5
         const val FACE_COVER_SDK_VERTICAL_OFFSET_DIVISOR = 8
+
+        private val SDK_CALL_LOCK = Any()
+        private val SDK_LIFECYCLE_EXECUTOR: ExecutorService =
+            Executors.newSingleThreadExecutor()
+        private var faceSdkInitialized = false
+        private var activeInstance: WeakReference<CaptureFaceNativeView>? = null
+
+        @Synchronized
+        private fun ensureFaceSdkInitialized(appContext: Context) {
+            if (faceSdkInitialized) return
+            FaceSDKConfig.init(appContext)
+            faceSdkInitialized = true
+        }
+
+        @Synchronized
+        private fun claimActiveInstance(
+            instance: CaptureFaceNativeView
+        ): CaptureFaceNativeView? {
+            val previous = activeInstance?.get()
+            activeInstance = WeakReference(instance)
+            return previous?.takeIf { it !== instance }
+        }
+
+        @Synchronized
+        private fun clearActiveInstance(instance: CaptureFaceNativeView) {
+            if (activeInstance?.get() === instance) {
+                activeInstance = null
+            }
+        }
     }
 }
