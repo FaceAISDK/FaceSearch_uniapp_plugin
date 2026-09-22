@@ -26,6 +26,17 @@ import BitmapUtils from "com.faceAI.demo.base.utils.BitmapUtils";
 import FaceSearchFeatureManger from 'com.ai.face.faceSearch.search.FaceSearchFeatureManger';
 import Gson from 'com.google.gson.Gson'
 
+const ADD_FACE_REQUEST_CODE: Int = 10086
+let addFaceActivityResultCallback: ((requestCode: Int, resultCode: Int, data?: Intent) => void) | null = null
+
+function clearAddFaceActivityResultCallback(): void {
+    const currentCallback = addFaceActivityResultCallback
+    if (currentCallback != null) {
+        UTSAndroid.offAppActivityResult(currentCallback)
+        addFaceActivityResultCallback = null
+    }
+}
+
 /**
  * 打开全屏相机，持续返回裁剪人脸、静默活体分数和相机原图。
  */
@@ -442,37 +453,57 @@ export function addFaceSearchFeatureByCamera(
     needShowConfirmDialog: boolean,
     callback: (result: ResultJSON) => void
 ): void {
-    UTSAndroid.getUniActivity()!.runOnUiThread(() => {
-        const context = UTSAndroid.getUniActivity() as Activity
-        FaceSDKConfig.init(context);
-        const intent = new Intent(context, AddFaceFeatureActivity().javaClass)
-        intent.putExtra("ADD_FACE_IMAGE_TYPE_KEY", "FACE_SEARCH");
-        intent.putExtra("ADD_FACE_PERFORMANCE_MODE", addFacePerformanceMode);
-      
-        intent.putExtra("USER_FACE_ID_KEY", faceID);
-        intent.putExtra("NEED_CONFIRM_ADD_FACE", needShowConfirmDialog);
+    if (addFaceActivityResultCallback != null) {
+        callback({ code: -1, msg: "已有相机录入任务正在进行", faceFeature: "", faceBase64: "" } as ResultJSON)
+        return
+    }
 
-        context.startActivityForResult(intent, 10086)
-    });
-    
-    UTSAndroid.onAppActivityResult((requestCode: Int, resultCode: Int, intentAct?: Intent) => {
-        if (requestCode == 10086) {
-            if (intentAct != null) {
-                const codeNow = intentAct.getIntExtra("code", 0)
-                const rawMsg = intentAct.getStringExtra("msg")
-                const msgNow = (rawMsg == null) ? "" : rawMsg
-                
-                let faceBase64 = ""
-				let faceFeature = ""
-                if (0 != codeNow) {
-                    faceBase64 = BitmapUtils.bitmapToBase64(FaceSDKConfig.CACHE_SEARCH_FACE_DIR + faceID)
-					faceFeature = intentAct.getStringExtra("faceFeature") ?? ""
-                }
-                
-                callback({ code: codeNow, msg: msgNow, faceFeature: faceFeature, faceBase64: faceBase64 } as ResultJSON)
-            } else {
-                callback({ code: -1, msg: "添加失败", faceFeature: "", faceBase64: "" } as ResultJSON)
-            }
+    const currentActivity = UTSAndroid.getUniActivity()
+    if (currentActivity == null) {
+        callback({ code: -1, msg: "当前页面不可用，无法启动相机录入", faceFeature: "", faceBase64: "" } as ResultJSON)
+        return
+    }
+    const context = currentActivity as Activity
+
+    addFaceActivityResultCallback = (requestCode: Int, resultCode: Int, intentAct?: Intent) => {
+        if (requestCode != ADD_FACE_REQUEST_CODE) {
+            return
         }
-    });
+
+        // 先注销再执行业务回调，允许业务在回调中安全地发起下一次录入。
+        clearAddFaceActivityResultCallback()
+
+        if (intentAct != null) {
+            const codeNow = intentAct.getIntExtra("code", 0)
+            const rawMsg = intentAct.getStringExtra("msg")
+            const msgNow = (rawMsg == null) ? "" : rawMsg
+
+            let faceBase64 = ""
+            let faceFeature = ""
+            if (0 != codeNow) {
+                faceBase64 = BitmapUtils.bitmapToBase64(FaceSDKConfig.CACHE_SEARCH_FACE_DIR + faceID)
+                faceFeature = intentAct.getStringExtra("faceFeature") ?? ""
+            }
+
+            callback({ code: codeNow, msg: msgNow, faceFeature: faceFeature, faceBase64: faceBase64 } as ResultJSON)
+        } else {
+            callback({ code: -1, msg: "添加失败", faceFeature: "", faceBase64: "" } as ResultJSON)
+        }
+    }
+    UTSAndroid.onAppActivityResult(addFaceActivityResultCallback!)
+
+    context.runOnUiThread(() => {
+        try {
+            FaceSDKConfig.init(context)
+            const intent = new Intent(context, AddFaceFeatureActivity().javaClass)
+            intent.putExtra("ADD_FACE_IMAGE_TYPE_KEY", "FACE_SEARCH")
+            intent.putExtra("ADD_FACE_PERFORMANCE_MODE", addFacePerformanceMode.toInt())
+            intent.putExtra("USER_FACE_ID_KEY", faceID)
+            intent.putExtra("NEED_CONFIRM_ADD_FACE", needShowConfirmDialog)
+            context.startActivityForResult(intent, ADD_FACE_REQUEST_CODE)
+        } catch (error) {
+            clearAddFaceActivityResultCallback()
+            callback({ code: -1, msg: "启动相机录入失败: " + error, faceFeature: "", faceBase64: "" } as ResultJSON)
+        }
+    })
 }

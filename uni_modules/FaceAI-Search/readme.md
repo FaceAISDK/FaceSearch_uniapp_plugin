@@ -33,7 +33,7 @@
 
 ### 设备适配
 
-- 支持 Android 5–16。
+- 支持 Android 6–16。
 - 支持 uni-app 和 uni-app x。
 - 支持手机、平板及横竖屏切换。
 - 相机预览自动铺满组件区域。
@@ -71,10 +71,13 @@ Demo 首页包含三个清晰分组：
 
 ### 制作自定义调试基座
 
-1. 使用 HBuilderX 打开 Demo 工程，并完成 [Android UTS 运行环境](https://doc.dcloud.net.cn/uni-app-x/plugin/uts-plugin.html)配置。
-2. 在 HBuilderX 顶部选择 **运行 → 运行到手机或模拟器 → 制作自定义调试基座**。
-3. 选择 Android 平台，按窗口提示提交云端打包并等待完成。
-4. 打包后的 Android 调试基座通常保存在项目的 `unpackage/debug/android_debug.apk`。
+1. 使用 HBuilderX 打开 Demo 工程，在 **设置 → 运行配置** 中完整填写 Gradle、JDK 和 Android SDK；三项均不能留空。Gradle 需为 7.5 及以上、9.0 以下，JDK 使用 17，Android SDK 需包含 Platform 和 Build-Tools 30 或更高版本。具体要求见 [DCloud Android UTS 运行环境说明](https://uniapp.dcloud.net.cn/tutorial/run/uts-development-android.html)。
+2. 重新运行一次项目，等待控制台完成插件三方依赖更新。
+3. 在 HBuilderX 顶部选择 **运行 → 运行到手机或模拟器 → 制作自定义调试基座**。
+4. 选择 Android 平台，按窗口提示提交云端打包并等待完成。
+5. 打包后的 Android 调试基座通常保存在项目的 `unpackage/debug/android_debug.apk`。
+
+> 如果控制台同时出现 `Theme.AppCompat.Light.NoActionBar not found`、`找不到名称 Keep` 或 `找不到名称 camera`，说明 AppCompat、AndroidX Annotation 和 CameraX 尚未进入编译类路径。优先检查上述三项运行配置，不要删除源码中的 AndroidX import 或改用标准基座规避。
 
 <div align="center">
   <img src="https://i.postimg.cc/QVZFgycd/1.png" width="720" alt="制作自定义调试基座" />
