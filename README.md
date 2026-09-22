@@ -66,8 +66,14 @@ FaceAI Search 面向门禁、签到、设备登录等本地身份识别场景。
 ### 1. 准备运行环境
 
 1. 安装并登录 HBuilderX，打开本工程。
-2. 参考 [DCloud UTS 插件环境说明](https://doc.dcloud.net.cn/uni-app-x/plugin/uts-plugin.html)完成 Android 开发环境配置。
-3. Android 真机开启开发者选项和 USB 调试，并确认 HBuilderX 能识别设备；使用模拟器时请选择 ARM 架构镜像。
+2. 打开 **HBuilderX → 设置 → 运行配置**，完整配置 Gradle、JDK 和 Android SDK；三项均不能留空：
+   - Gradle：7.5 及以上、9.0 以下。
+   - JDK：使用 JDK 17，可直接选择 HBuilderX 内置的 `amazon-corretto`。
+   - Android SDK：需包含 Android SDK Platform 和 Build-Tools 30 或更高版本。
+3. 参考 [DCloud Android UTS 运行环境说明](https://uniapp.dcloud.net.cn/tutorial/run/uts-development-android.html)检查配置，然后重新运行一次，让 HBuilderX 更新插件三方依赖。
+4. Android 真机开启开发者选项和 USB 调试，并确认 HBuilderX 能识别设备；使用模拟器时请选择 ARM 架构镜像。
+
+> 如果控制台同时出现 `Theme.AppCompat.Light.NoActionBar not found`、`找不到名称 Keep` 或 `找不到名称 camera`，通常不是插件源码丢失，而是上述运行配置不完整，导致 `config.json` 声明的 AppCompat、AndroidX Annotation 和 CameraX 没有进入资源与 Kotlin 编译类路径。补全三项配置并重新运行后，再制作自定义基座。
 
 ### 2. 制作自定义调试基座（必须要自定义基座）
 
