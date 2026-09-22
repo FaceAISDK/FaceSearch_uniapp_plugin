@@ -26,7 +26,7 @@ type FaceSearchProps = {
 const props = withDefaults(defineProps<FaceSearchProps>(), {
   searchThreshold: 0.86,
   searchOneTime: false,
-  searchTimeOut: 4000,
+  searchTimeOut: 2000,
   needLivenessCheck: true,
   cameraId: 0,
   linearZoom: 0.12,

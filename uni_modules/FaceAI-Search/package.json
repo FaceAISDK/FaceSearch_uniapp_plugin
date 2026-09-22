@@ -75,7 +75,7 @@
                         },
 						"android": {
                             "extVersion": "1.0.0",
-                            "minVersion": "21"
+                            "minVersion": "23"
                         },
 						"ios": "x",
 						"harmony": "-"
@@ -105,7 +105,7 @@
 					"app": {
 						"android": {
                             "extVersion": "1.0.0",
-                            "minVersion": "21"
+                            "minVersion": "23"
                         },
 						"ios": "x",
 						"harmony": "-"

@@ -4,7 +4,7 @@
 <div align="center">
   <h1>FaceAI Search</h1>
   <p>Android 端侧离线 1:N 人脸搜索识别插件</p>
-  <p><strong>uni-app · uni-app x · Android 5–16 · 完全离线</strong></p>
+  <p><strong>uni-app · uni-app x · Android 6–16 · 完全离线</strong></p>
 </div>
 
 ---
@@ -51,7 +51,7 @@ FaceAI Search 面向门禁、签到、设备登录等本地身份识别场景。
 
 | 项目 | 支持情况 |
 | --- | --- |
-| 系统 | Android 5–16 |
+| 系统 | Android 6–16 |
 | 框架 | uni-app、uni-app x |
 | 运行方式 | Android 自定义调试基座 |
 | 网络依赖 | 识别过程无需网络 |

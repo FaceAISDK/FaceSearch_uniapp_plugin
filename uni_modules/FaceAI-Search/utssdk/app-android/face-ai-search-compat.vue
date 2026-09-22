@@ -11,7 +11,7 @@ export default {
   props: {
     searchThreshold: { type: Number, default: 0.86 },
     searchOneTime: { type: Boolean, default: false },
-    searchTimeOut: { type: Number, default: 4000 },
+    searchTimeOut: { type: Number, default: 2000 },
     needLivenessCheck: { type: Boolean, default: true },
     cameraId: { type: Number, default: 0 },
     linearZoom: { type: Number, default: 0.12 },

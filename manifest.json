@@ -2,8 +2,8 @@
 	"name": "人脸搜索",
 	"appid": "__UNI__B90AA89",
 	"description": "相机人脸抓拍，人脸搜索识别，图片人脸搜索，以及活体检测 ",
-	"versionName": "2026.09.20",
-	"versionCode": "20260920",
+	"versionName": "2026.09.22",
+	"versionCode": "20260922",
 	"uni-app-x": {},
 	/* 快应用特有相关 */
 	"quickapp": {},
@@ -53,7 +53,7 @@
 			"splashScreens": {
 				"default": {}
 			},
-			"minSdkVersion": "21",
+			"minSdkVersion": "23",
 			"targetSdkVersion": "36",
 			"abiFilters": [
 				"arm64-v8a",

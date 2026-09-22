@@ -66,7 +66,7 @@ public class FaceSearchActivity extends AbsBaseActivity {
 
     private float searchThreshold = 0.85f;
     private boolean searchOneTime = false;
-    private int searchTimeOut = 4000;
+    private int searchTimeOut = 2000;
     private boolean isCameraSizeHigh = false;
     private int cameraLensFacing;
     private boolean needFaceLive = false;
@@ -95,7 +95,7 @@ public class FaceSearchActivity extends AbsBaseActivity {
             }
 
             if (intent.hasExtra(SEARCH_TIME_OUT)) {
-                searchTimeOut = intent.getIntExtra(SEARCH_TIME_OUT, 4000);
+                searchTimeOut = intent.getIntExtra(SEARCH_TIME_OUT, 2000);
             }
             if (intent.hasExtra(IS_CAMERA_SIZE_HIGH)) {
                 isCameraSizeHigh = intent.getBooleanExtra(IS_CAMERA_SIZE_HIGH, false);
@@ -151,7 +151,7 @@ public class FaceSearchActivity extends AbsBaseActivity {
                 .setThreshold(searchThreshold)
                 .setCallBackAllMatch(true)
                 .setSearchIntervalTime(1700)
-				.setSearchTimeOut(4000)    //搜索超时时间，超时后会提示无结果,默认3000，范围[3000,6000]毫秒
+                .setSearchTimeOut(searchTimeOut)    //搜索超时时间，超时后会提示无结果，默认2000，范围[2000,6000]毫秒
                 .setMirror(cameraLensFacing == CameraSelector.LENS_FACING_FRONT)
                 .setProcessCallBack(new SearchProcessCallBack() {
                     @Override

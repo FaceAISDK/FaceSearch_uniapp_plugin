@@ -117,7 +117,7 @@
 			faceSearchByCameraDemo: function () {				
 				const threshold = 0.85;    // 阈值[0.8.0.9],只有人脸库中匹配到的人脸相似度大于此才有结果返回
 				const oneTime = false;     // 搜索页持续存准备人脸搜索， 还是仅仅搜索一次返回结果后关闭搜索页面
-				const searchTimeOut = 4000; // 搜索超时时间，超时后会提示无结果,默认3000，范围[3000,6000]毫秒
+				const searchTimeOut = 2000; // 搜索超时时间，超时后会提示无结果，默认2000，范围[2000,6000]毫秒
 				
 			    faceSearchByCamera(
 			        threshold,

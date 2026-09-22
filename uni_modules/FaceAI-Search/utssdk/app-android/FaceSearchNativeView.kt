@@ -69,7 +69,7 @@ class FaceSearchNativeView(context: Context) : FrameLayout(context) {
 
     private var searchThreshold = 0.86f
     private var searchOneTime = false
-    private var searchTimeOut = 4000
+    private var searchTimeOut = 2000
     private var needLivenessCheck = true
     @Volatile
     private var cameraId = CameraSelector.LENS_FACING_FRONT
@@ -213,7 +213,7 @@ class FaceSearchNativeView(context: Context) : FrameLayout(context) {
     fun start(
         searchThreshold: Float = 0.86f,
         searchOneTime: Boolean = false,
-        searchTimeOut: Int = 4000,
+        searchTimeOut: Int = 2000,
         needLivenessCheck: Boolean = true,
         cameraId: Int = CameraSelector.LENS_FACING_FRONT,
         linearZoom: Float = 0.12f,
@@ -243,7 +243,7 @@ class FaceSearchNativeView(context: Context) : FrameLayout(context) {
 
         this.searchThreshold = searchThreshold
         this.searchOneTime = searchOneTime
-        this.searchTimeOut = searchTimeOut.coerceIn(3000, 6000)
+        this.searchTimeOut = searchTimeOut.coerceIn(2000, 6000)
         this.needLivenessCheck = needLivenessCheck
         this.cameraId = cameraId
         this.linearZoom = linearZoom.coerceIn(0f, 1f)
